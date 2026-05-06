@@ -233,21 +233,24 @@ describe('cli', () => {
 
   it('--body and stdin together is rejected', async () => {
     await captureRun(['init'], tmp.cwd);
-    // Mock stdin as non-TTY with content. parseArgs reads body, then readStdin
-    // returns "data" -> conflict.
+    // readStdin attaches `data` / `end` / `error` listeners on process.stdin;
+    // synthesize one chunk + end so the read resolves before the timeout.
     const origIsTTY = process.stdin.isTTY;
     Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
-    async function* fakeStdin(): AsyncGenerator<Buffer, void, unknown> {
-      yield Buffer.from('piped body');
-    }
-    // biome-ignore lint/suspicious/noExplicitAny: AsyncGenerator<Buffer> doesn't unify with AsyncIterableIterator<unknown>
-    const stdinSpy = vi.spyOn(process.stdin, Symbol.asyncIterator).mockReturnValue(fakeStdin() as any);
+    const onImpl = ((event: string, listener: (...a: unknown[]) => void) => {
+      if (event === 'data') queueMicrotask(() => listener(Buffer.from('piped body')));
+      if (event === 'end') queueMicrotask(() => listener());
+      return process.stdin;
+    }) as unknown as Parameters<typeof process.stdin.on>[1] extends never ? never : typeof process.stdin.on;
+    const onSpy = vi.spyOn(process.stdin, 'on').mockImplementation(onImpl);
+    const removeSpy = vi.spyOn(process.stdin, 'removeListener').mockImplementation((() => process.stdin) as never);
     try {
       const r = await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a', '--body', 'inline'], tmp.cwd);
       expect(r.exitCode).toBe(2);
       expect(r.stderr.join('\n')).toMatch(/body.*stdin/);
     } finally {
-      stdinSpy.mockRestore();
+      onSpy.mockRestore();
+      removeSpy.mockRestore();
       Object.defineProperty(process.stdin, 'isTTY', { value: origIsTTY, configurable: true });
     }
   });
