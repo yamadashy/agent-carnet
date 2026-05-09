@@ -31,6 +31,16 @@ The mental model is the leather notebook a quietly meticulous agent slips from a
 
 If you want a deeper dive into the philosophy and the road from the `agent-memory` skill to `agent-carnet`, the design docs live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
 
+## Why agent-carnet
+
+**Records, not memories.** Most "AI memory" tools think of an agent's notes as model state to be reconstructed via retrieval. agent-carnet treats them as files. If the file is on disk, the knowledge is there; if not, it is gone. You can `grep`, `cat`, `git diff`, hand-edit, or copy a carnet between projects — no LLM in the loop, no opaque database, no service to call.
+
+**Agent-agnostic by default.** Anything that can shell out can read and write the same notebook — Claude Code, Codex, Cursor, a cron job, you. There is no SDK, no MCP requirement, no daemon to spin up. Multiple agents working in the same project see the same notes the same way.
+
+**Safe to forget.** Each carnet has a 30-day default lifespan that resets every time it is actually read. Notes that earn re-use survive; notes that do not drift to `.trash/` on their own. Auto-pruning runs on every CLI invocation, the trash itself has a TTL so deletes are recoverable for a week, and `keep: true` pins anything you would rather not lose.
+
+**Honest framing.** No "brain", no "cognitive memory", no benchmarks against ICLR papers. agent-carnet is a small CLI that manages a folder of markdown files with a polite expiry policy — and that turns out to be enough for the day-to-day "remember why we did it this way" use case.
+
 ## Quick start
 
 ```bash
