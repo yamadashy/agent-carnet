@@ -17,7 +17,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
-`agent-carnet` is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file with YAML frontmatter under `.agent-carnet/<category>/<slug>.md`, ready to `grep`, `cat`, `git diff`, or edit by hand.
+`agent-carnet` (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY" — French *carnet*, silent t) is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file with YAML frontmatter under `.agent-carnet/<category>/<slug>.md`, ready to `grep`, `cat`, `git diff`, or edit by hand.
 
 The agent saves notes explicitly — nothing is captured in the background. Each carnet has a 30-day default lifespan that resets every time it is read, so useful notes survive while stale ones drift to `.trash/` on their own. The agent calls `save`, `find`, `show`; you `cat`, `grep`, or edit. Same files, two ways in.
 
