@@ -195,6 +195,46 @@ echo "..." | agent-carnet save vocab/staging-adapter \
 
 Refresh-on-use does the rest: synonyms that keep getting cited stay alive, ones that nobody invokes drift to `.trash/` automatically. The `vocab` tag is purely a project-level convention — the file is just markdown, and agent-carnet itself does not know or care that it represents a term.
 
+### Hypothesis ledger
+
+Long debugging sessions keep producing dead-ends — "we tried X and it didn't work because Y" — and the next session (or the next agent) cheerfully retries the same thing. Vector search and `CLAUDE.md` skim well for "what worked"; they're worse at "what was already tried and ruled out". A small carnet per hypothesis fixes that with no extra machinery: tag it `hypothesis`, write the test and the verdict in the body, let `meta.hypothesis.*` carry the structured status:
+
+```yaml
+---
+summary: "iconv-lite v0.7 esm import path — types broken upstream"
+agent: claude-code
+tags: [hypothesis]
+related:
+  - https://github.com/pillarjs/iconv-lite/issues/363
+meta:
+  hypothesis:
+    status: debunked
+    last_tested: 2026-04-30
+---
+
+## Hypothesis
+Switching to esm imports should let us run `iconv-lite` on Node 22
+(v0.7 advertises ESM support).
+
+## Tests
+1. `npm install iconv-lite@0.7.1` → type error (`Cannot find module declaration`).
+2. Set `tsconfig.moduleResolution` to `bundler` → same error.
+3. Inspected v0.7.1 source → broken `package.json#exports` types.
+
+## Verdict
+Pin to `v0.6.3`. The whole v0.7 series is broken upstream (Issue #363).
+Wait for v0.8 before retrying.
+```
+
+Before exploring a new theory, the agent checks whether anyone has been here before:
+
+```bash
+agent-carnet find <symptom> --in all
+agent-carnet find <library> --in tags    # narrow to hypothesis: notes
+```
+
+If a hypothesis is debunked, the body explains *why* and the agent (or human) moves on without burning the same evidence again. Refresh-on-use turns staleness into signal: a debunked hypothesis nobody has needed to consult in 30 days drops to `.trash/`, which is the right behavior — by then either the library has moved or the problem isn't recurring. The hypotheses that *do* keep getting cited are the load-bearing "do not touch" entries.
+
 ## How it differs from built-in agent memory
 
 |   | Vendor-managed agent memory | **agent-carnet** |
