@@ -231,6 +231,152 @@ describe('cli', () => {
     expect(r.stdout.join('\n')).toContain('imported');
   });
 
+  it('touch bumps updated and emits the updated date', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a', '--body', 'body'], tmp.cwd);
+    // Backdate so we can prove the bump happened.
+    const file = join(tmp.cwd, '.agent-carnet/deps/x.md');
+    const fs = await import('node:fs/promises');
+    let content = await fs.readFile(file, 'utf-8');
+    content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
+    await fs.writeFile(file, content, 'utf-8');
+
+    // Disable auto-prune — the backdate above would otherwise sweep the file
+    // before touch ever runs.
+    const r = await captureRun(['touch', 'deps/x', '--no-auto-prune'], tmp.cwd);
+    expect(r.exitCode).toBeNull();
+    expect(r.stdout.join('\n')).toMatch(/touched: deps\/x.md/);
+
+    const after = await fs.readFile(file, 'utf-8');
+    expect(after).not.toMatch(/updated: 2020-01-01/);
+    // Body must be preserved.
+    expect(after).toContain('body');
+  });
+
+  it('touch on missing carnet exits 3', async () => {
+    await captureRun(['init'], tmp.cwd);
+    const r = await captureRun(['touch', 'deps/missing'], tmp.cwd);
+    expect(r.exitCode).toBe(3);
+    expect(r.stderr.join('\n')).toContain('not_found');
+  });
+
+  it('touch JSON output shape', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const r = await captureRun(['--json', 'touch', 'deps/x'], tmp.cwd);
+    const obj = JSON.parse(r.stdout.join('\n'));
+    expect(obj.ok).toBe(true);
+    expect(obj.path).toBe('deps/x.md');
+    expect(typeof obj.updated).toBe('string');
+  });
+
+  it('move relocates a carnet (full destination)', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const r = await captureRun(['move', 'deps/x', 'archive/x'], tmp.cwd);
+    expect(r.exitCode).toBeNull();
+    expect(r.stdout.join('\n')).toContain('moved: deps/x.md -> archive/x.md');
+    const fs = await import('node:fs');
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/archive/x.md'))).toBe(true);
+  });
+
+  it('move with trailing slash keeps source filename', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const r = await captureRun(['--json', 'move', 'deps/x', 'archive/'], tmp.cwd);
+    const obj = JSON.parse(r.stdout.join('\n'));
+    expect(obj.ok).toBe(true);
+    expect(obj.from).toBe('deps/x.md');
+    expect(obj.to).toBe('archive/x.md');
+  });
+
+  it('move conflict exits 4 and --update overrides', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    await captureRun(['save', 'archive/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const conflict = await captureRun(['move', 'deps/x', 'archive/x'], tmp.cwd);
+    expect(conflict.exitCode).toBe(4);
+    const ok = await captureRun(['move', 'deps/x', 'archive/x', '--update'], tmp.cwd);
+    expect(ok.exitCode).toBeNull();
+  });
+
+  it('move missing source exits 3', async () => {
+    await captureRun(['init'], tmp.cwd);
+    const r = await captureRun(['move', 'deps/missing', 'archive/x'], tmp.cwd);
+    expect(r.exitCode).toBe(3);
+  });
+
+  it('rm --yes moves to .trash/', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const r = await captureRun(['rm', 'deps/x', '--yes'], tmp.cwd);
+    expect(r.exitCode).toBeNull();
+    expect(r.stdout.join('\n')).toMatch(/removed: deps\/x.md/);
+    const fs = await import('node:fs');
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/x.md'))).toBe(true);
+  });
+
+  it('rm --hard --yes unlinks immediately', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const r = await captureRun(['rm', 'deps/x', '--hard', '--yes'], tmp.cwd);
+    expect(r.exitCode).toBeNull();
+    expect(r.stdout.join('\n')).toContain('(hard delete)');
+    const fs = await import('node:fs');
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/x.md'))).toBe(false);
+  });
+
+  it('rm without --yes and no TTY falls back to "cancelled"', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    // Vitest workers have stdin.isTTY === undefined → confirm() returns false.
+    const r = await captureRun(['rm', 'deps/x'], tmp.cwd);
+    expect(r.exitCode).toBeNull();
+    expect(r.stdout.join('\n')).toContain('cancelled');
+    const fs = await import('node:fs');
+    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(true);
+  });
+
+  it('rm JSON output shape', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
+    const r = await captureRun(['--json', 'rm', 'deps/x', '--yes'], tmp.cwd);
+    const obj = JSON.parse(r.stdout.join('\n'));
+    expect(obj).toEqual({ ok: true, path: 'deps/x.md', trashed: true });
+  });
+
+  it('rm missing carnet exits 3', async () => {
+    await captureRun(['init'], tmp.cwd);
+    const r = await captureRun(['rm', 'deps/missing', '--yes'], tmp.cwd);
+    expect(r.exitCode).toBe(3);
+  });
+
+  it('prune --interactive --json is rejected', async () => {
+    await captureRun(['init'], tmp.cwd);
+    const r = await captureRun(['--json', 'prune', '--interactive'], tmp.cwd);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr.join('\n')).toMatch(/interactive/);
+  });
+
+  it('prune --interactive without TTY treats every prompt as no', async () => {
+    await captureRun(['init'], tmp.cwd);
+    await captureRun(['save', 'deps/old', '--summary', 's', '--agent', 'a', '--lifespan', '1d'], tmp.cwd);
+    const file = join(tmp.cwd, '.agent-carnet/deps/old.md');
+    const fs = await import('node:fs/promises');
+    let content = await fs.readFile(file, 'utf-8');
+    content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
+    await fs.writeFile(file, content, 'utf-8');
+    const r = await captureRun(['prune', '--interactive', '--no-auto-prune'], tmp.cwd);
+    expect(r.exitCode).toBeNull();
+    // Default-no in non-TTY mode means nothing is moved.
+    const fs2 = await import('node:fs');
+    expect(fs2.existsSync(file)).toBe(true);
+    expect(r.stdout.join('\n')).toContain('moved to .trash/: 0');
+  });
+
   it('--body and stdin together is rejected', async () => {
     await captureRun(['init'], tmp.cwd);
     // readStdin attaches `data` / `end` / `error` listeners on process.stdin;

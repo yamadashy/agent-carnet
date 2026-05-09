@@ -55,6 +55,43 @@ describe('prune', () => {
     expect(existsSync(join(storageRoot(tmp.cwd), 'deps/old.md'))).toBe(true);
   });
 
+  it('skips candidates the prompter says no to', async () => {
+    await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/yes', summary: 's', agent: 'a', body: '' },
+      new Date(Date.UTC(2026, 0, 1)),
+    );
+    await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/no', summary: 's', agent: 'a', body: '' },
+      new Date(Date.UTC(2026, 0, 1)),
+    );
+    const seen: string[] = [];
+    const report = await prune(
+      tmp.cwd,
+      config,
+      {
+        onCandidate: (cand) => {
+          seen.push(cand.carnet.relPath);
+          return cand.carnet.relPath.endsWith('yes.md') ? 'yes' : 'no';
+        },
+      },
+      new Date(Date.UTC(2026, 4, 4)),
+    );
+    expect(seen.sort()).toEqual(['deps/no.md', 'deps/yes.md']);
+    expect(report.movedToTrash).toEqual(['deps/yes.md']);
+    expect(existsSync(join(storageRoot(tmp.cwd), 'deps/no.md'))).toBe(true);
+  });
+
+  it('quits early on quit decision', async () => {
+    await save(tmp.cwd, config, { path: 'deps/a', summary: 's', agent: 'a', body: '' }, new Date(Date.UTC(2026, 0, 1)));
+    await save(tmp.cwd, config, { path: 'deps/b', summary: 's', agent: 'a', body: '' }, new Date(Date.UTC(2026, 0, 1)));
+    const report = await prune(tmp.cwd, config, { onCandidate: () => 'quit' }, new Date(Date.UTC(2026, 4, 4)));
+    expect(report.movedToTrash).toEqual([]);
+  });
+
   it('hard-deletes from .trash/ after TTL when --include-trash', async () => {
     await save(
       tmp.cwd,
