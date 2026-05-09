@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/v/agent-carnet.svg?maxAge=1000" alt="npm"></a>
-  <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/dm/agent-carnet.svg" alt="downloads"></a>
+  <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/dt/agent-carnet.svg" alt="downloads"></a>
   <a href="https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml"><img src="https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
