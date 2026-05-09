@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir, readdir, rm, rmdir } from 'node:fs/promises';
+import { cp, mkdir, readdir, rm, rmdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,7 +12,7 @@ import { CarnetError } from './errors.js';
  */
 export const SKILL_DIR_NAME = 'agent-carnet';
 
-/** Filename of the bundled skill definition. */
+/** Filename of the bundled skill definition (the anchor file inside the dir). */
 export const SKILL_FILE_NAME = 'SKILL.md';
 
 export interface SkillTargetOptions {
@@ -28,107 +28,122 @@ export interface SkillInstallOptions extends SkillTargetOptions {
   /** Overwrite an existing SKILL.md if present. */
   force?: boolean;
   /**
-   * Override the bundled SKILL.md source path. Used by tests; the CLI relies
+   * Override the bundled skill source directory. Used by tests; the CLI relies
    * on the default lookup against `import.meta.url`.
    */
   source?: string;
 }
 
 export interface SkillInstallResult {
-  /** Absolute path the SKILL.md was written to. */
+  /** Absolute path of the installed SKILL.md (the canonical anchor file). */
   path: string;
-  /** True when an existing file was overwritten via `--force`. */
+  /** Absolute path of the installed skill directory (parent of SKILL.md). */
+  dir: string;
+  /** True when an existing SKILL.md was overwritten via `--force`. */
   overwritten: boolean;
 }
 
 export interface SkillUninstallResult {
-  /** Absolute path that was targeted (whether or not it existed). */
+  /** Absolute path that was targeted for the SKILL.md (whether or not it existed). */
   path: string;
+  /** Absolute path of the skill directory (whether or not it existed). */
+  dir: string;
   /** True when a file was actually removed. False when nothing was there. */
   removed: boolean;
 }
 
 /**
- * Resolve the absolute target path for `agent-carnet skill (install|uninstall|path)`.
+ * Resolve the absolute target *directory* for `agent-carnet skill`. This is the
+ * folder that holds SKILL.md plus the bundled `references/` subtree.
  *
- * The `--here` form picks `<cwd>/.claude/skills/agent-carnet/SKILL.md`. Without
+ * The `--here` form picks `<cwd>/.claude/skills/agent-carnet/`. Without
  * `--here`, the target is the user's global Claude Code skills folder under
- * `$HOME/.claude/skills/agent-carnet/SKILL.md`.
+ * `$HOME/.claude/skills/agent-carnet/`.
  */
-export function resolveSkillTarget(options: SkillTargetOptions = {}): string {
-  const base = options.here
+export function resolveSkillDir(options: SkillTargetOptions = {}): string {
+  return options.here
     ? join(options.cwd ?? process.cwd(), '.claude', 'skills', SKILL_DIR_NAME)
     : join(options.home ?? homedir(), '.claude', 'skills', SKILL_DIR_NAME);
-  return join(base, SKILL_FILE_NAME);
+}
+
+/** Resolve the absolute target *file* path for SKILL.md inside the skill dir. */
+export function resolveSkillTarget(options: SkillTargetOptions = {}): string {
+  return join(resolveSkillDir(options), SKILL_FILE_NAME);
 }
 
 /**
- * Locate the bundled `SKILL.md` shipped alongside the CLI.
+ * Locate the bundled skill *directory* shipped alongside the CLI.
  *
  * The published tarball lays out `dist/bin/agent-carnet.mjs` and a sibling
- * `skills/agent-carnet/SKILL.md`, so we anchor on this module's own file URL
- * and walk up to the package root. The first candidate that exists wins; the
- * second handles local-dev runs where the CLI executes from `src/` (via tsx).
+ * `skills/agent-carnet/` (containing SKILL.md plus references/), so we anchor
+ * on this module's own file URL and walk up to the package root. The first
+ * candidate that contains a SKILL.md wins.
  */
-export function locateBundledSkill(): string {
+export function locateBundledSkillDir(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    // Built layout: dist/<chunk>.mjs or dist/bin/agent-carnet.mjs → ../skills/...
-    resolve(here, '..', 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME),
-    // Built layout one level deeper: dist/bin/*.mjs → ../../skills/...
-    resolve(here, '..', '..', 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME),
-    // tsx / source-run layout: src/core/skill.ts → ../../skills/...
-    resolve(here, '..', '..', 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME),
+    // Built layout: dist/<chunk>.mjs → ../skills/agent-carnet/
+    resolve(here, '..', 'skills', SKILL_DIR_NAME),
+    // Built layout one level deeper: dist/bin/*.mjs → ../../skills/agent-carnet/
+    resolve(here, '..', '..', 'skills', SKILL_DIR_NAME),
     // Fallback for any caller that runs the CLI from the package root.
-    resolve(process.cwd(), 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME),
+    resolve(process.cwd(), 'skills', SKILL_DIR_NAME),
   ];
   for (const candidate of candidates) {
-    if (existsSync(candidate)) return candidate;
+    if (existsSync(join(candidate, SKILL_FILE_NAME))) return candidate;
   }
   throw new CarnetError(
     'internal_error',
-    `bundled SKILL.md not found (searched: ${candidates.join(', ')})`,
+    `bundled skill directory not found (searched: ${candidates.join(', ')})`,
     'reinstall agent-carnet — the package may be corrupted',
   );
 }
 
 /**
- * Copy the bundled SKILL.md into the target Claude Code skills directory.
+ * Copy the bundled skill directory (SKILL.md + references/) into the target
+ * Claude Code skills directory.
  *
- * Refuses to clobber an existing file unless `force` is set; that surfaces as
- * a `conflict` error and exit code 4 at the CLI boundary.
+ * Refuses to clobber an existing SKILL.md unless `force` is set; that surfaces
+ * as a `conflict` error and exit code 4 at the CLI boundary. With `force`, the
+ * entire target directory is replaced.
  */
 export async function installSkill(options: SkillInstallOptions = {}): Promise<SkillInstallResult> {
-  const target = resolveSkillTarget(options);
-  const source = options.source ?? locateBundledSkill();
+  const dir = resolveSkillDir(options);
+  const target = join(dir, SKILL_FILE_NAME);
+  const sourceDir = options.source ?? locateBundledSkillDir();
   const exists = existsSync(target);
   if (exists && !options.force) {
     throw new CarnetError(
       'conflict',
       `SKILL.md already exists at ${target}`,
-      'pass --force to overwrite the existing file',
+      'pass --force to overwrite the existing skill files',
     );
   }
-  await mkdir(dirname(target), { recursive: true });
-  await copyFile(source, target);
-  return { path: target, overwritten: exists };
+  await mkdir(dirname(dir), { recursive: true });
+  // Recursive copy: ships SKILL.md plus everything under references/.
+  // `force: true` lets --force overwrite individual files inside the target.
+  await cp(sourceDir, dir, { recursive: true, force: true });
+  return { path: target, dir, overwritten: exists };
 }
 
 /**
- * Remove the installed SKILL.md and the `agent-carnet/` parent dir if empty.
+ * Remove the installed skill directory and the parent skills/ dir if empty.
  *
- * Idempotent: a missing file is treated as a no-op (no error). The parent dir
- * is only removed when empty so a co-installed skill (e.g. user-edited files)
- * is never collateral damage.
+ * Idempotent: a missing SKILL.md is treated as a no-op (no error). The whole
+ * `agent-carnet/` subtree is removed (SKILL.md + references/ + anything else
+ * inside) — anyone who edited those files in place loses the edits, which is
+ * the right tradeoff for an explicit `uninstall`. The grandparent `skills/`
+ * dir is only removed when it has no other skills in it.
  */
 export async function uninstallSkill(options: SkillTargetOptions = {}): Promise<SkillUninstallResult> {
-  const target = resolveSkillTarget(options);
+  const dir = resolveSkillDir(options);
+  const target = join(dir, SKILL_FILE_NAME);
   if (!existsSync(target)) {
-    return { path: target, removed: false };
+    return { path: target, dir, removed: false };
   }
-  await rm(target, { force: true });
-  // Best-effort cleanup of the parent agent-carnet/ dir when nothing else lives there.
-  const parent = dirname(target);
+  await rm(dir, { recursive: true, force: true });
+  // Best-effort cleanup of the parent `skills/` dir when nothing else lives there.
+  const parent = dirname(dir);
   try {
     const entries = await readdir(parent);
     if (entries.length === 0) {
@@ -137,5 +152,5 @@ export async function uninstallSkill(options: SkillTargetOptions = {}): Promise<
   } catch {
     // Parent dir may have already vanished (race with a manual rm). Not fatal.
   }
-  return { path: target, removed: true };
+  return { path: target, dir, removed: true };
 }

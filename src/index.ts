@@ -11,7 +11,8 @@ export { type SaveInput, type SaveResult, save } from './core/save.js';
 export { type ShowOptions, show } from './core/show.js';
 export {
   installSkill,
-  locateBundledSkill,
+  locateBundledSkillDir,
+  resolveSkillDir,
   resolveSkillTarget,
   type SkillInstallOptions,
   type SkillInstallResult,

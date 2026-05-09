@@ -49,7 +49,7 @@ Before starting related work or when context might exist:
 - `--summary` is required. Make it decisive — reading the summary in isolation tells the next reader (or the next agent) whether to read further.
 - `--agent claude-code` is required.
 - `find` does NOT bump lifespan. `show` does. Bumping requires actually reading the body.
-- The 30-day expiry is automatic — do not manually clean up. `keep: true` pins permanent notes (set via direct file edit or `--keep` on save).
+- The 30-day expiry is automatic — do not manually clean up. `keep: true` pins permanent notes.
 - Auto-prune runs on every CLI invocation; deleted carnets land in `.agent-carnet/.trash/` for 7 days before hard delete.
 
 ## Path conventions
@@ -58,12 +58,13 @@ Before starting related work or when context might exist:
 - Categories are folders; create new ones freely as needed.
 - Subcategories are allowed: `deps/esm/iconv-issue` works.
 
-## Conventions worth knowing
+## When to read references/
 
-The README documents a couple of tag-only patterns that need no extra commands:
-- `tags: [vocab]` for project terminology (one carnet per term)
-- `tags: [hypothesis]` for debugging dead-ends with `meta.hypothesis.status`
+This SKILL.md is enough for everyday note-keeping. Open the references/ files **only** when one of these specific cases applies — they are not always-on context, so do not load them speculatively.
 
-Apply them when they fit, ignore them otherwise — they are conventions, not features.
+| Read this file | When |
+|---|---|
+| `references/cookbook.md` | You are about to use (or are being asked about) a tag-based pattern such as `tags: [vocab]` for project terminology or `tags: [hypothesis]` for debugging dead-ends. The file shows the full pattern, including how to structure the body and `meta:` for that pattern. |
+| `references/frontmatter.md` | You need to write or read the `meta:` extension namespace, set a non-trivial `lifespan` / `keep`, or understand why an unfamiliar frontmatter field is or is not preserved on save. |
 
-See https://github.com/yamadashy/agent-carnet#cookbook for full examples.
+If neither case applies, **do not read references/**. The base of this file already covers daily save/find/show/touch/move/rm flows.

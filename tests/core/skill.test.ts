@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CarnetError } from '../../src/core/errors.js';
 import {
   installSkill,
+  resolveSkillDir,
   resolveSkillTarget,
   SKILL_DIR_NAME,
   SKILL_FILE_NAME,
@@ -17,20 +18,22 @@ import { makeTmpCwd } from '../helpers/tmp.js';
  */
 describe('skill', () => {
   let tmp: ReturnType<typeof makeTmpCwd>;
-  let source: string;
+  let sourceDir: string;
 
   beforeEach(() => {
     tmp = makeTmpCwd();
-    // Synthesize a SKILL.md "bundle" inside the tmp dir so we don't depend on
-    // the real one shipped with the package.
-    const bundleDir = join(tmp.cwd, '_bundle', 'skills', SKILL_DIR_NAME);
-    mkdirSync(bundleDir, { recursive: true });
-    source = join(bundleDir, SKILL_FILE_NAME);
-    writeFileSync(source, '---\nname: agent-carnet\n---\n# bundled\n', 'utf-8');
+    // Synthesize a "bundle" directory that mirrors the real ship layout
+    // (SKILL.md plus references/*.md) so we can prove install copies the
+    // whole tree.
+    sourceDir = join(tmp.cwd, '_bundle', 'skills', SKILL_DIR_NAME);
+    mkdirSync(join(sourceDir, 'references'), { recursive: true });
+    writeFileSync(join(sourceDir, SKILL_FILE_NAME), '---\nname: agent-carnet\n---\n# bundled\n', 'utf-8');
+    writeFileSync(join(sourceDir, 'references', 'cookbook.md'), '# cookbook\n', 'utf-8');
+    writeFileSync(join(sourceDir, 'references', 'frontmatter.md'), '# frontmatter\n', 'utf-8');
   });
   afterEach(() => tmp.cleanup());
 
-  describe('resolveSkillTarget', () => {
+  describe('resolveSkillTarget / resolveSkillDir', () => {
     it('defaults to <home>/.claude/skills/agent-carnet/SKILL.md', () => {
       const p = resolveSkillTarget({ home: tmp.cwd });
       expect(p).toBe(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME));
@@ -40,64 +43,75 @@ describe('skill', () => {
       const p = resolveSkillTarget({ here: true, cwd: tmp.cwd });
       expect(p).toBe(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME));
     });
+
+    it('resolveSkillDir returns the parent of SKILL.md', () => {
+      const dir = resolveSkillDir({ home: tmp.cwd });
+      expect(dir).toBe(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME));
+    });
   });
 
   describe('installSkill', () => {
-    it('creates the target file', async () => {
-      const result = await installSkill({ home: tmp.cwd, source });
+    it('copies SKILL.md and the references/ subtree', async () => {
+      const result = await installSkill({ home: tmp.cwd, source: sourceDir });
       expect(existsSync(result.path)).toBe(true);
       expect(result.overwritten).toBe(false);
       expect(readFileSync(result.path, 'utf-8')).toContain('# bundled');
+      // references/ files survive the copy.
+      expect(existsSync(join(result.dir, 'references', 'cookbook.md'))).toBe(true);
+      expect(existsSync(join(result.dir, 'references', 'frontmatter.md'))).toBe(true);
+      expect(readFileSync(join(result.dir, 'references', 'cookbook.md'), 'utf-8')).toContain('# cookbook');
     });
 
     it('mkdir -p the parent dir', async () => {
-      const result = await installSkill({ home: tmp.cwd, source });
+      const result = await installSkill({ home: tmp.cwd, source: sourceDir });
       expect(existsSync(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME))).toBe(true);
       expect(result.path).toMatch(/SKILL\.md$/);
     });
 
     it('refuses to clobber an existing SKILL.md without --force', async () => {
-      await installSkill({ home: tmp.cwd, source });
-      await expect(installSkill({ home: tmp.cwd, source })).rejects.toBeInstanceOf(CarnetError);
-      await expect(installSkill({ home: tmp.cwd, source })).rejects.toMatchObject({ code: 'conflict' });
+      await installSkill({ home: tmp.cwd, source: sourceDir });
+      await expect(installSkill({ home: tmp.cwd, source: sourceDir })).rejects.toBeInstanceOf(CarnetError);
+      await expect(installSkill({ home: tmp.cwd, source: sourceDir })).rejects.toMatchObject({ code: 'conflict' });
     });
 
     it('overwrites with --force', async () => {
-      await installSkill({ home: tmp.cwd, source });
-      // Replace the source file so we can prove the copy happened again.
-      writeFileSync(source, '---\nname: agent-carnet\n---\n# replaced\n', 'utf-8');
-      const result = await installSkill({ home: tmp.cwd, source, force: true });
+      await installSkill({ home: tmp.cwd, source: sourceDir });
+      // Replace bundle content so we can prove the copy happened again.
+      writeFileSync(join(sourceDir, SKILL_FILE_NAME), '---\nname: agent-carnet\n---\n# replaced\n', 'utf-8');
+      writeFileSync(join(sourceDir, 'references', 'cookbook.md'), '# replaced cookbook\n', 'utf-8');
+      const result = await installSkill({ home: tmp.cwd, source: sourceDir, force: true });
       expect(result.overwritten).toBe(true);
       expect(readFileSync(result.path, 'utf-8')).toContain('# replaced');
+      expect(readFileSync(join(result.dir, 'references', 'cookbook.md'), 'utf-8')).toContain('# replaced cookbook');
     });
 
     it('--here installs into <cwd>/.claude/skills/...', async () => {
-      const result = await installSkill({ here: true, cwd: tmp.cwd, source });
+      const result = await installSkill({ here: true, cwd: tmp.cwd, source: sourceDir });
       expect(result.path).toBe(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME, SKILL_FILE_NAME));
       expect(existsSync(result.path)).toBe(true);
+      expect(existsSync(join(result.dir, 'references', 'cookbook.md'))).toBe(true);
     });
   });
 
   describe('uninstallSkill', () => {
-    it('removes an installed SKILL.md', async () => {
-      const installed = await installSkill({ home: tmp.cwd, source });
+    it('removes the entire installed skill dir (SKILL.md + references/)', async () => {
+      const installed = await installSkill({ home: tmp.cwd, source: sourceDir });
       const result = await uninstallSkill({ home: tmp.cwd });
       expect(result.removed).toBe(true);
       expect(existsSync(installed.path)).toBe(false);
+      expect(existsSync(installed.dir)).toBe(false);
     });
 
-    it('removes the empty parent agent-carnet/ dir', async () => {
-      await installSkill({ home: tmp.cwd, source });
+    it('keeps the grandparent skills/ dir when other skills live there', async () => {
+      await installSkill({ home: tmp.cwd, source: sourceDir });
+      // Drop a sibling skill so the skills/ parent is not empty.
+      const skillsDir = join(tmp.cwd, '.claude', 'skills');
+      mkdirSync(join(skillsDir, 'some-other-skill'), { recursive: true });
+      writeFileSync(join(skillsDir, 'some-other-skill', 'SKILL.md'), 'keep me', 'utf-8');
       await uninstallSkill({ home: tmp.cwd });
-      expect(existsSync(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME))).toBe(false);
-    });
-
-    it('keeps the parent dir when other files live there', async () => {
-      await installSkill({ home: tmp.cwd, source });
-      // Drop a sibling file so the parent is no longer empty.
-      writeFileSync(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME, 'NOTES.md'), 'keep me', 'utf-8');
-      await uninstallSkill({ home: tmp.cwd });
-      expect(existsSync(join(tmp.cwd, '.claude', 'skills', SKILL_DIR_NAME))).toBe(true);
+      // agent-carnet skill dir gone; sibling preserved.
+      expect(existsSync(join(skillsDir, SKILL_DIR_NAME))).toBe(false);
+      expect(existsSync(join(skillsDir, 'some-other-skill', 'SKILL.md'))).toBe(true);
     });
 
     it('is idempotent when nothing is installed', async () => {

@@ -14,12 +14,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`~/.claude/skills/agent-carnet/SKILL.md`); `--here` scopes the install to
   `<cwd>/.claude/skills/agent-carnet/SKILL.md` instead. `install` refuses to
   overwrite an existing file unless `--force` is passed (exit code 4 /
-  `conflict`); `uninstall` is idempotent and cleans up the empty
-  `agent-carnet/` parent dir but never a non-empty one.
+  `conflict`); `uninstall` removes the entire installed skill subtree
+  (`SKILL.md` + `references/`) and is idempotent when nothing is there.
 - Bundled `skills/agent-carnet/SKILL.md` shipped in the npm tarball
   (`files: ["dist/", "skills/", ...]`). The CLI resolves the bundled file
   relative to its own `import.meta.url` so the same lookup works for both
   `dist/bin/agent-carnet.mjs` and source-mode runs via tsx.
+- `skills/agent-carnet/references/cookbook.md` and
+  `skills/agent-carnet/references/frontmatter.md` — deeper, opt-in
+  reference material the SKILL.md tells the agent to read only when a
+  specific case applies (adopting a cookbook pattern, writing into the
+  `meta:` namespace, working with non-trivial `lifespan`/`keep`). The
+  daily save/find/show flow is fully covered by SKILL.md alone, so the
+  references stay out of the always-on context.
 
 ### Removed
 
