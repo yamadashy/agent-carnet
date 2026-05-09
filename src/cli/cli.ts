@@ -9,7 +9,6 @@ import { type PruneCandidate, type PruneDecision, prune } from '../core/prune.js
 import { remove } from '../core/rm.js';
 import { save } from '../core/save.js';
 import { show } from '../core/show.js';
-import { installSkill, resolveSkillTarget, uninstallSkill } from '../core/skill.js';
 import { touch } from '../core/touch.js';
 import { parseCsv } from '../core/validate.js';
 import { exitCodeFor, formatErrorHuman, formatErrorJson, toErrorShape } from '../output/error.js';
@@ -116,9 +115,6 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
         return;
       case 'prune':
         await cmdPrune(cwd, args, flags);
-        return;
-      case 'skill':
-        await cmdSkill(cwd, args, flags);
         return;
       default:
         throw new CarnetError(
@@ -391,61 +387,5 @@ async function cmdRm(cwd: string, args: string[], flags: RunFlags): Promise<void
   } else {
     const tail = result.trashed ? '-> .trash/' : '(hard delete)';
     console.log(`removed: ${result.relPath}  ${tail}`);
-  }
-}
-
-async function cmdSkill(cwd: string, args: string[], flags: RunFlags): Promise<void> {
-  const [sub, ...rest] = args;
-  if (!sub) {
-    throw new CarnetError(
-      'validation_error',
-      'skill <install|uninstall|path> is required',
-      'try: agent-carnet skill install',
-    );
-  }
-  const parsed = parseArgs({
-    args: rest,
-    allowPositionals: true,
-    options: {
-      here: { type: 'boolean' },
-      force: { type: 'boolean' },
-    },
-  });
-  const here = parsed.values.here as boolean | undefined;
-  const force = parsed.values.force as boolean | undefined;
-
-  switch (sub) {
-    case 'install': {
-      const result = await installSkill({ here, force, cwd });
-      if (flags.json) {
-        console.log(JSON.stringify({ ok: true, path: result.path, overwritten: result.overwritten }, null, 2));
-      } else {
-        const verb = result.overwritten ? 'overwritten' : 'installed';
-        console.log(`✓ ${verb} at ${result.path}`);
-      }
-      return;
-    }
-    case 'uninstall': {
-      const result = await uninstallSkill({ here, cwd });
-      if (flags.json) {
-        console.log(JSON.stringify({ ok: true, path: result.path, removed: result.removed }, null, 2));
-      } else if (result.removed) {
-        console.log(`✓ uninstalled ${result.path}`);
-      } else {
-        console.log(`nothing to uninstall (not installed at ${result.path})`);
-      }
-      return;
-    }
-    case 'path': {
-      const target = resolveSkillTarget({ here, cwd });
-      if (flags.json) {
-        console.log(JSON.stringify({ ok: true, path: target }, null, 2));
-      } else {
-        console.log(target);
-      }
-      return;
-    }
-    default:
-      throw new CarnetError('validation_error', `unknown skill subcommand: ${sub}`, 'one of: install, uninstall, path');
   }
 }

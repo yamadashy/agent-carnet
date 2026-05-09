@@ -8,25 +8,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `skill install` / `skill uninstall` / `skill path` — manage a bundled
-  Claude Code `SKILL.md` so the agent learns when to reach for the CLI.
-  Defaults to the user's global skills folder
-  (`~/.claude/skills/agent-carnet/SKILL.md`); `--here` scopes the install to
-  `<cwd>/.claude/skills/agent-carnet/SKILL.md` instead. `install` refuses to
-  overwrite an existing file unless `--force` is passed (exit code 4 /
-  `conflict`); `uninstall` removes the entire installed skill subtree
-  (`SKILL.md` + `references/`) and is idempotent when nothing is there.
-- Bundled `skills/agent-carnet/SKILL.md` shipped in the npm tarball
-  (`files: ["dist/", "skills/", ...]`). The CLI resolves the bundled file
-  relative to its own `import.meta.url` so the same lookup works for both
-  `dist/bin/agent-carnet.mjs` and source-mode runs via tsx.
-- `skills/agent-carnet/references/cookbook.md` and
-  `skills/agent-carnet/references/frontmatter.md` — deeper, opt-in
-  reference material the SKILL.md tells the agent to read only when a
-  specific case applies (adopting a cookbook pattern, writing into the
-  `meta:` namespace, working with non-trivial `lifespan`/`keep`). The
-  daily save/find/show flow is fully covered by SKILL.md alone, so the
-  references stay out of the always-on context.
+- Bundled skill at `skills/agent-carnet/` shipped in the npm tarball
+  (`files: ["dist/", "skills/", ...]`) — `SKILL.md` plus
+  `references/cookbook.md` and `references/frontmatter.md`. SKILL.md
+  covers the daily save / find / show flow on its own and instructs the
+  agent to read references/ only when a specific case applies (adopting
+  a cookbook pattern, writing into the `meta:` namespace, working with
+  non-trivial `lifespan`/`keep`). Install via the open agent-skills
+  installer: `npx skills add yamadashy/agent-carnet`.
+
+### Removed
+
+- `skill install` / `skill uninstall` / `skill path` subcommands and
+  the in-tree `core/skill.ts` that backed them. Skill installation is
+  now delegated to [`npx skills`](https://github.com/vercel-labs/skills),
+  the open multi-agent installer. The bundled skill files stay in the
+  package for `npx skills` to pick up; only the CLI's own copy logic
+  goes away.
 
 ### Removed
 

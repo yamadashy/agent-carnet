@@ -9,17 +9,6 @@ export { categoryOf, normalizeCarnetPath, slugOf, storageRoot, trashRoot } from 
 export { type PruneOptions, prune } from './core/prune.js';
 export { type SaveInput, type SaveResult, save } from './core/save.js';
 export { type ShowOptions, show } from './core/show.js';
-export {
-  installSkill,
-  locateBundledSkillDir,
-  resolveSkillDir,
-  resolveSkillTarget,
-  type SkillInstallOptions,
-  type SkillInstallResult,
-  type SkillTargetOptions,
-  type SkillUninstallResult,
-  uninstallSkill,
-} from './core/skill.js';
 export { loadAllCarnets, readCarnet, writeCarnet } from './core/storage.js';
 export type {
   Carnet,

@@ -13,9 +13,6 @@ Commands:
   move <from> <to>           Move a carnet to a new category (use trailing / to keep filename)
   rm <category>/<slug>       Delete a carnet (.trash/ by default; --hard to unlink, --yes to skip prompt)
   prune                      Move expired carnets to .trash/ (--dry-run, --auto, --interactive)
-  skill install              Install the bundled SKILL.md into ~/.claude/skills/ (--here, --force)
-  skill uninstall            Remove the installed SKILL.md (--here)
-  skill path                 Print the SKILL.md install target (--here)
 
 Global options:
       --json                 Machine-readable output
@@ -44,6 +41,4 @@ Examples:
   agent-carnet move deps/iconv-issue archive/
   agent-carnet rm deps/iconv-issue --yes
   agent-carnet prune --interactive
-  agent-carnet skill install
-  agent-carnet skill install --here
 `;

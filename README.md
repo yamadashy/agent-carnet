@@ -61,19 +61,17 @@ npm install -g agent-carnet
 
 ## Install the Claude Code skill
 
-agent-carnet ships a bundled `SKILL.md` so [Claude Code](https://docs.anthropic.com/claude/docs/claude-code) knows when to reach for the CLI. Install it once into your global skills folder and every Claude Code session can use it; pass `--here` to scope the skill to a single project instead. Both are reversible (`skill uninstall`) and idempotent.
+agent-carnet ships a bundled skill at `skills/agent-carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
 
 ```bash
-# Global install — drops SKILL.md into ~/.claude/skills/agent-carnet/
-npx agent-carnet skill install
+# Project install (default) — drops the skill into <cwd>/.claude/skills/agent-carnet/
+npx skills add yamadashy/agent-carnet
 
-# Project-local install — drops SKILL.md into <cwd>/.claude/skills/agent-carnet/
-npx agent-carnet skill install --here
-
-# Inspect or remove
-npx agent-carnet skill path
-npx agent-carnet skill uninstall
+# Global install — drops it into ~/.claude/skills/agent-carnet/ instead
+npx skills add yamadashy/agent-carnet -g
 ```
+
+`npx skills` handles the install / uninstall / list lifecycle uniformly across agents, so agent-carnet itself doesn't need to know about Claude Code's filesystem layout.
 
 ## Commands
 
@@ -88,11 +86,10 @@ npx agent-carnet skill uninstall
 | `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
 | `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
 | `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
-| `skill install [--here] [--force]` | Install the bundled Claude Code `SKILL.md` (default: `~/.claude/skills/agent-carnet/`; `--here` for the current project). |
-| `skill uninstall [--here]` | Remove the installed `SKILL.md` (idempotent). |
-| `skill path [--here]` | Print the absolute install target without touching the filesystem. |
 
 Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
+
+Skill installation lives outside the CLI — see [Install the Claude Code skill](#install-the-claude-code-skill) above for the `npx skills` flow.
 
 ## Frontmatter schema
 
