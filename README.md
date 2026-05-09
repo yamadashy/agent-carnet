@@ -1,23 +1,35 @@
-# agent-carnet
+<div align="center">
+  <!-- TODO: drop ./docs/logo.svg in once the leather-notebook icon is ready, then uncomment.
+  <img src="./docs/logo.svg" alt="agent-carnet" width="180" height="auto" />
+  -->
+  <h1>agent-carnet 📓</h1>
+  <p align="center">
+    <span><i>un petit carnet</i> for AI agents — and the humans who work with them</span>
+  </p>
+</div>
 
-[![npm](https://img.shields.io/npm/v/agent-carnet.svg?maxAge=1000)](https://www.npmjs.com/package/agent-carnet)
-[![CI](https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml/badge.svg)](https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml)
-[![License](https://img.shields.io/npm/l/agent-carnet)](LICENSE)
+<hr />
 
-> A leather notebook in your jacket pocket, for AI agents.
+<p align="center">
+  <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/v/agent-carnet.svg?maxAge=1000" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/dm/agent-carnet.svg" alt="downloads"></a>
+  <a href="https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml"><img src="https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+</p>
 
-`agent-carnet` is a small CLI for AI agents (Claude Code, Codex, Cursor, ...) and humans to record markdown notes, organized by category, with auto-expiry. Each *carnet* is a single markdown file with YAML frontmatter, stored under `.agent-carnet/<category>/<slug>.md`.
+`agent-carnet` is a tiny CLI that gives any AI coding agent — Claude Code, Codex, Cursor, you name it — a shared notebook on disk. Each note is a single markdown file with YAML frontmatter under `.agent-carnet/<category>/<slug>.md`, the kind of file you can `grep`, `cat`, `git diff`, and read with your own eyes, no LLM in the loop.
 
-It is the CLI evolution of the `agent-memory` skill: the same "safe to forget" model, repackaged as a tool any agent can call via shell.
+Where most "AI memory" systems quietly hoard everything an agent ever did into an opaque database, agent-carnet does the opposite. The agent has to **decide** something is worth writing, names it, and the file lives there on disk for anyone to read or edit. Notes carry a 30-day default lifespan that resets every time they're read — useful ones survive, stale ones drift to `.trash/` on their own. The agent calls `save`, `find`, `show`; you `cat`, `grep`, or edit by hand. Same files, two ways in.
 
-## Why agent-carnet
+The mental model is the leather notebook a quietly meticulous agent slips from a jacket pocket, jots a single line into, and snaps shut. Not a cybernetic brain implant — just a small, honest carnet that any agent or human can pick up and read.
 
-- **Records, not memories.** A carnet is a fact written to disk, not a model's hidden state. You can grep it, diff it, commit it, and read it without an LLM.
-- **Agent-agnostic.** Any agent that can run a shell command can write to the same shared notebook. No vendor lock-in.
-- **Safe to forget.** Each carnet has a 30-day default lifespan that resets every time it is read. Stale notes drift to `.trash/` automatically; useful ones survive.
-- **Honest framing.** No "brain", no "cognitive", no "AI memory". It's a file-management CLI with a polite expiry policy.
+<!-- TODO: capture ./docs/screenshots/terminal.png (a side-by-side of `agent-carnet list` and `agent-carnet show`) and uncomment.
+<p align="center">
+  <img src="./docs/screenshots/terminal.png" alt="agent-carnet list and show output, with category-grouped carnets and a styled markdown view" />
+</p>
+-->
 
-If you want a deeper dive into the philosophy and the road from `agent-memory` skill to `agent-carnet`, the design docs live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
+If you want a deeper dive into the philosophy and the road from the `agent-memory` skill to `agent-carnet`, the design docs live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
 
 ## Quick start
 
