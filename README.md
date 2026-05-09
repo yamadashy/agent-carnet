@@ -95,12 +95,16 @@ related:                                 # optional (paths or other carnets)
   - src/core/file/encoding.ts
 lifespan: 90d                            # optional (override default 30d)
 keep: true                               # optional (pin against auto-prune)
+meta:                                    # optional, free-form extension namespace
+  <extension>:
+    <key>: <value>
 ---
 ```
 
 Notes:
 - There is **no `status` field**. The legacy skill had one; `agent-carnet import` lifts `status: <v>` into `tags: [status:<v>]` so no information is lost.
 - `lifespan` accepts duration strings (`30d`, `90d`, `1y`) and the literal `never`.
+- `meta:` is a deliberate extension point for tools and conventions that need structured data beyond what `tags:` and `related:` express. The CLI does not interpret `meta:` itself — it preserves the full subtree on every read/write so downstream consumers (an Obsidian plugin, a sibling agent, your own script) can read and act on it. Namespace keys under the convention name (`meta.vocab.*`, `meta.hypothesis.*`) so different extensions don't collide.
 
 ## Storage layout
 
@@ -151,7 +155,7 @@ agent-carnet is just a folder of markdown files; useful patterns emerge from how
 
 Multiple agents (and humans) routinely invent different names for the same concept — Claude Code calls something "staging adapter", Codex writes "proxy layer", a human's note uses "forward middleware". By the time anyone notices, three identifiers have leaked into the codebase.
 
-Use one carnet per term, tagged with `vocab`, to make naming a deliberate, visible act:
+Use one carnet per term, tagged with `vocab`. The `tags:` value declares membership; the optional `meta.vocab.*` subtree carries structured data downstream tools can act on (resolve an alias to its canonical, list rejected names, etc.) while the body explains the *why* in narrative form:
 
 ```yaml
 ---
@@ -161,6 +165,13 @@ tags: [vocab]
 related:
   - .agent-carnet/vocab/payload-envelope.md
   - src/staging/adapter.ts
+meta:
+  vocab:
+    canonical: staging adapter
+    aliases:
+      - proxy layer
+      - forward middleware
+      - request shim
 ---
 
 # staging adapter
@@ -172,11 +183,6 @@ requests into the `payload-envelope` format. Nothing more.
 ## Why this name
 "proxy" is overloaded; "middleware" collides with the Express concept.
 "staging adapter" leaves no doubt about which layer is meant.
-
-## Rejected alternatives
-- proxy layer
-- forward middleware
-- request shim
 ```
 
 The agent-side flow is small. Before naming a new concept, the agent checks whether someone already named it:
