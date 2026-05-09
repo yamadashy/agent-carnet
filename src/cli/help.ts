@@ -9,7 +9,10 @@ Commands:
   list [category]            List carnets (--recent, --tags, --expiring, --sort)
   find <keyword>             Search carnets (--in summary|tags|body|all, --category)
   show <category>/<slug>     Print a carnet (refreshes "updated" unless --no-touch)
-  prune                      Move expired carnets to .trash/ (--dry-run, --auto)
+  touch <category>/<slug>    Bump "updated" to today without reading the body
+  move <from> <to>           Move a carnet to a new category (use trailing / to keep filename)
+  rm <category>/<slug>       Delete a carnet (.trash/ by default; --hard to unlink, --yes to skip prompt)
+  prune                      Move expired carnets to .trash/ (--dry-run, --auto, --interactive)
   import [src]               Migrate from agent-memory skill memories/ folder
 
 Global options:
@@ -35,4 +38,8 @@ Examples:
   agent-carnet list --recent 10
   agent-carnet find iconv --in all
   agent-carnet show deps/iconv-issue
+  agent-carnet touch deps/iconv-issue
+  agent-carnet move deps/iconv-issue archive/
+  agent-carnet rm deps/iconv-issue --yes
+  agent-carnet prune --interactive
 `;

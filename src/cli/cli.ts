@@ -6,10 +6,13 @@ import { find as findCarnets } from '../core/find.js';
 import { importFrom } from '../core/import.js';
 import { init } from '../core/init.js';
 import { list } from '../core/list.js';
+import { move } from '../core/move.js';
 import { storageRoot } from '../core/paths.js';
-import { prune } from '../core/prune.js';
+import { type PruneCandidate, type PruneDecision, prune } from '../core/prune.js';
+import { remove } from '../core/rm.js';
 import { save } from '../core/save.js';
 import { show } from '../core/show.js';
+import { touch } from '../core/touch.js';
 import { parseCsv } from '../core/validate.js';
 import { exitCodeFor, formatErrorHuman, formatErrorJson, toErrorShape } from '../output/error.js';
 import {
@@ -23,7 +26,7 @@ import {
   formatShowJson,
 } from '../output/format.js';
 import { HELP_TEXT } from './help.js';
-import { readStdin } from './io.js';
+import { confirm, confirm3, readStdin } from './io.js';
 import { getVersion } from './version.js';
 
 interface RunFlags {
@@ -103,6 +106,15 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
         return;
       case 'show':
         await cmdShow(cwd, args, flags);
+        return;
+      case 'touch':
+        await cmdTouch(cwd, args, flags);
+        return;
+      case 'move':
+        await cmdMove(cwd, args, flags);
+        return;
+      case 'rm':
+        await cmdRm(cwd, args, flags);
         return;
       case 'prune':
         await cmdPrune(cwd, args, flags);
@@ -286,12 +298,28 @@ async function cmdPrune(cwd: string, args: string[], flags: RunFlags): Promise<v
     },
   });
   const v = parsed.values;
-  // `--interactive` is acknowledged in Phase 1 but defers to bulk move; we keep
-  // the flag wired so scripts that pass it don't break, and document that the
-  // prompts will land in a follow-up phase.
+  const interactive = v.interactive as boolean | undefined;
+  if (interactive && (v.auto || flags.json)) {
+    throw new CarnetError('validation_error', '--interactive cannot be combined with --auto or --json');
+  }
+
+  const onCandidate = interactive
+    ? async (cand: PruneCandidate): Promise<PruneDecision> => {
+        const fm = cand.carnet.frontmatter;
+        const summary = typeof fm.summary === 'string' ? fm.summary : '';
+        const updated = typeof fm.updated === 'string' ? fm.updated : '?';
+        process.stderr.write(
+          `\n${cand.carnet.relPath}\n  summary: ${summary}\n  updated: ${updated} (expired ${cand.expiredDays}d ago)\n`,
+        );
+        const ans = await confirm3('prune this carnet? [y/N/q] ');
+        return ans;
+      }
+    : undefined;
+
   const report = await prune(cwd, readConfig(), {
     dryRun: v['dry-run'] as boolean | undefined,
     includeTrash: v['include-trash'] as boolean | undefined,
+    onCandidate,
   });
   if (flags.json) {
     console.log(JSON.stringify({ ok: true, ...report }, null, 2));
@@ -302,6 +330,69 @@ async function cmdPrune(cwd: string, args: string[], flags: RunFlags): Promise<v
     for (const p of report.movedToTrash) console.log(`  - ${p}`);
     console.log(`hard-deleted: ${report.hardDeleted.length}`);
     for (const p of report.hardDeleted) console.log(`  - ${p}`);
+  }
+}
+
+async function cmdTouch(cwd: string, args: string[], flags: RunFlags): Promise<void> {
+  const parsed = parseArgs({ args, allowPositionals: true, options: {} });
+  const path = parsed.positionals[0];
+  if (!path) throw new CarnetError('validation_error', 'touch <path> is required');
+  const result = await touch(cwd, path);
+  if (flags.json) {
+    console.log(JSON.stringify({ ok: true, path: result.relPath, updated: result.updated }, null, 2));
+  } else {
+    console.log(`touched: ${result.relPath}  (updated: ${result.updated})`);
+  }
+}
+
+async function cmdMove(cwd: string, args: string[], flags: RunFlags): Promise<void> {
+  const parsed = parseArgs({
+    args,
+    allowPositionals: true,
+    options: { update: { type: 'boolean' } },
+  });
+  const [from, to] = parsed.positionals;
+  if (!from || !to) {
+    throw new CarnetError('validation_error', 'move <from> <to> requires both arguments');
+  }
+  const result = await move(cwd, from, to, { update: parsed.values.update as boolean | undefined });
+  if (flags.json) {
+    console.log(JSON.stringify({ ok: true, from: result.fromRel, to: result.toRel }, null, 2));
+  } else {
+    console.log(`moved: ${result.fromRel} -> ${result.toRel}`);
+  }
+}
+
+async function cmdRm(cwd: string, args: string[], flags: RunFlags): Promise<void> {
+  const parsed = parseArgs({
+    args,
+    allowPositionals: true,
+    options: {
+      yes: { type: 'boolean' },
+      hard: { type: 'boolean' },
+    },
+  });
+  const path = parsed.positionals[0];
+  if (!path) throw new CarnetError('validation_error', 'rm <path> is required');
+  const yes = parsed.values.yes as boolean | undefined;
+  const hard = parsed.values.hard as boolean | undefined;
+
+  if (!yes) {
+    const prompt = hard ? `hard-delete ${path}? [y/N] ` : `rm ${path}? [y/N] `;
+    const ok = await confirm(prompt);
+    if (!ok) {
+      if (flags.json) console.log(JSON.stringify({ ok: false, cancelled: true }, null, 2));
+      else console.log('cancelled');
+      return;
+    }
+  }
+
+  const result = await remove(cwd, path, { hard });
+  if (flags.json) {
+    console.log(JSON.stringify({ ok: true, path: result.relPath, trashed: result.trashed }, null, 2));
+  } else {
+    const tail = result.trashed ? '-> .trash/' : '(hard delete)';
+    console.log(`removed: ${result.relPath}  ${tail}`);
   }
 }
 
