@@ -40,11 +40,11 @@ describe('touch', () => {
       { path: 'deps/iconv', summary: 's', agent: 'a', body: '' },
       new Date(Date.UTC(2026, 4, 4)),
     );
-    const before = statSync(`${tmp.cwd}/.agent-carnet/deps/iconv.md`).mtimeMs;
+    const before = statSync(`${tmp.cwd}/.carnet/deps/iconv.md`).mtimeMs;
     await new Promise((resolve) => setTimeout(resolve, 10));
     const r = await touch(tmp.cwd, 'deps/iconv', new Date(Date.UTC(2026, 4, 4)));
     expect(r.changed).toBe(false);
-    const after = statSync(`${tmp.cwd}/.agent-carnet/deps/iconv.md`).mtimeMs;
+    const after = statSync(`${tmp.cwd}/.carnet/deps/iconv.md`).mtimeMs;
     expect(after).toBe(before);
   });
 

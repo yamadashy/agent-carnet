@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { CarnetError } from './errors.js';
 
-export const STORAGE_DIR_NAME = '.agent-carnet';
+export const STORAGE_DIR_NAME = '.carnet';
 export const TRASH_DIR_NAME = '.trash';
 
 export function storageRoot(cwd: string = process.cwd()): string {

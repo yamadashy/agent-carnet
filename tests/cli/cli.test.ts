@@ -195,7 +195,7 @@ describe('cli', () => {
     // Save an already-expired carnet by backdating updated.
     await captureRun(['save', 'deps/old', '--summary', 's', '--agent', 'a', '--lifespan', '1d'], tmp.cwd);
     // Backdate the file's updated field so it would normally prune.
-    const file = join(tmp.cwd, '.agent-carnet/deps/old.md');
+    const file = join(tmp.cwd, '.carnet/deps/old.md');
     const fs = await import('node:fs/promises');
     let content = await fs.readFile(file, 'utf-8');
     content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
@@ -209,7 +209,7 @@ describe('cli', () => {
   it('auto-prune moves expired carnets on next invocation', async () => {
     await captureRun(['init'], tmp.cwd);
     await captureRun(['save', 'deps/old', '--summary', 's', '--agent', 'a', '--lifespan', '1d'], tmp.cwd);
-    const file = join(tmp.cwd, '.agent-carnet/deps/old.md');
+    const file = join(tmp.cwd, '.carnet/deps/old.md');
     const fs = await import('node:fs/promises');
     let content = await fs.readFile(file, 'utf-8');
     content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
@@ -217,14 +217,14 @@ describe('cli', () => {
     await captureRun(['list'], tmp.cwd);
     const fs2 = await import('node:fs');
     expect(fs2.existsSync(file)).toBe(false);
-    expect(fs2.existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/old.md'))).toBe(true);
+    expect(fs2.existsSync(join(tmp.cwd, '.carnet/.trash/deps/old.md'))).toBe(true);
   });
 
   it('touch bumps updated and emits the updated date', async () => {
     await captureRun(['init'], tmp.cwd);
     await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a', '--body', 'body'], tmp.cwd);
     // Backdate so we can prove the bump happened.
-    const file = join(tmp.cwd, '.agent-carnet/deps/x.md');
+    const file = join(tmp.cwd, '.carnet/deps/x.md');
     const fs = await import('node:fs/promises');
     let content = await fs.readFile(file, 'utf-8');
     content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
@@ -266,8 +266,8 @@ describe('cli', () => {
     expect(r.exitCode).toBeNull();
     expect(r.stdout.join('\n')).toContain('moved: deps/x.md -> archive/x.md');
     const fs = await import('node:fs');
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(false);
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/archive/x.md'))).toBe(true);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/archive/x.md'))).toBe(true);
   });
 
   it('move with trailing slash keeps source filename', async () => {
@@ -303,8 +303,8 @@ describe('cli', () => {
     expect(r.exitCode).toBeNull();
     expect(r.stdout.join('\n')).toMatch(/removed: deps\/x.md/);
     const fs = await import('node:fs');
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(false);
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/x.md'))).toBe(true);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/.trash/deps/x.md'))).toBe(true);
   });
 
   it('rm --hard --yes unlinks immediately', async () => {
@@ -314,8 +314,8 @@ describe('cli', () => {
     expect(r.exitCode).toBeNull();
     expect(r.stdout.join('\n')).toContain('(hard delete)');
     const fs = await import('node:fs');
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(false);
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/deps/x.md'))).toBe(false);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/.trash/deps/x.md'))).toBe(false);
   });
 
   it('rm without --yes and no TTY falls back to "cancelled"', async () => {
@@ -326,7 +326,7 @@ describe('cli', () => {
     expect(r.exitCode).toBeNull();
     expect(r.stdout.join('\n')).toContain('cancelled');
     const fs = await import('node:fs');
-    expect(fs.existsSync(join(tmp.cwd, '.agent-carnet/deps/x.md'))).toBe(true);
+    expect(fs.existsSync(join(tmp.cwd, '.carnet/deps/x.md'))).toBe(true);
   });
 
   it('rm JSON output shape', async () => {
@@ -353,7 +353,7 @@ describe('cli', () => {
   it('prune --interactive without TTY treats every prompt as no', async () => {
     await captureRun(['init'], tmp.cwd);
     await captureRun(['save', 'deps/old', '--summary', 's', '--agent', 'a', '--lifespan', '1d'], tmp.cwd);
-    const file = join(tmp.cwd, '.agent-carnet/deps/old.md');
+    const file = join(tmp.cwd, '.carnet/deps/old.md');
     const fs = await import('node:fs/promises');
     let content = await fs.readFile(file, 'utf-8');
     content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');

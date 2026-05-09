@@ -27,11 +27,11 @@ describe('init', () => {
     const r = await init(tmp.cwd, { gitignore: true });
     expect(r.gitignoreUpdated).toBe(true);
     const gi = readFileSync(join(tmp.cwd, '.gitignore'), 'utf-8');
-    expect(gi).toContain('.agent-carnet/');
+    expect(gi).toContain('.carnet/');
   });
 
   it('does not duplicate the gitignore entry', async () => {
-    writeFileSync(join(tmp.cwd, '.gitignore'), '.agent-carnet/\n');
+    writeFileSync(join(tmp.cwd, '.gitignore'), '.carnet/\n');
     const r = await init(tmp.cwd, { gitignore: true });
     expect(r.gitignoreUpdated).toBe(false);
   });

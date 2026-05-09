@@ -23,8 +23,8 @@ describe('move', () => {
     const r = await move(tmp.cwd, 'deps/iconv', 'archive/iconv-old');
     expect(r.fromRel).toBe('deps/iconv.md');
     expect(r.toRel).toBe('archive/iconv-old.md');
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/deps/iconv.md'))).toBe(false);
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/archive/iconv-old.md'))).toBe(true);
+    expect(existsSync(join(tmp.cwd, '.carnet/deps/iconv.md'))).toBe(false);
+    expect(existsSync(join(tmp.cwd, '.carnet/archive/iconv-old.md'))).toBe(true);
     // Frontmatter preserved as-is — created/updated unchanged.
     expect(readFileSync(r.toAbs, 'utf-8')).toContain('summary: s');
   });
@@ -56,8 +56,8 @@ describe('move', () => {
     await save(tmp.cwd, config, { path: 'deps/a', summary: 'src', agent: 'a', body: 'src-body' });
     await save(tmp.cwd, config, { path: 'archive/a', summary: 'dst', agent: 'a', body: 'dst-body' });
     await move(tmp.cwd, 'deps/a', 'archive/a', { update: true });
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/deps/a.md'))).toBe(false);
-    expect(readFileSync(join(tmp.cwd, '.agent-carnet/archive/a.md'), 'utf-8')).toContain('summary: src');
+    expect(existsSync(join(tmp.cwd, '.carnet/deps/a.md'))).toBe(false);
+    expect(readFileSync(join(tmp.cwd, '.carnet/archive/a.md'), 'utf-8')).toContain('summary: src');
   });
 
   it('rejects path traversal in either argument', async () => {

@@ -4,7 +4,7 @@ Usage:
   agent-carnet <command> [args] [options]
 
 Commands:
-  init                       Create ./.agent-carnet/
+  init                       Create ./.carnet/
   save <category>/<slug>     Create or update a carnet (--summary, --agent required)
   list [category]            List carnets (--recent, --tags, --expiring, --sort)
   find <keyword>             Search carnets (--in summary|tags|body|all, --category)
@@ -31,8 +31,8 @@ Environment variables:
   AGENT_CARNET_TRASH_TTL         How long .trash/ keeps deleted carnets (default: 7d)
 
 Storage:
-  All carnets live under <cwd>/.agent-carnet/<category>/<slug>.md
-  Expired carnets are moved to <cwd>/.agent-carnet/.trash/
+  All carnets live under <cwd>/.carnet/<category>/<slug>.md
+  Expired carnets are moved to <cwd>/.carnet/.trash/
 
 Examples:
   agent-carnet init --gitignore

@@ -2,7 +2,7 @@
  * Shared type definitions for agent-carnet.
  *
  * The "carnet" model: each carnet is one markdown file with YAML frontmatter
- * stored under `<cwd>/.agent-carnet/<category>/<slug>.md`. Lifespan is per
+ * stored under `<cwd>/.carnet/<category>/<slug>.md`. Lifespan is per
  * carnet (default 30d) and refreshes on read.
  */
 
@@ -30,7 +30,7 @@ export interface CarnetFrontmatter {
 
 /** A loaded carnet — frontmatter + body + on-disk path. */
 export interface Carnet {
-  /** Path relative to `.agent-carnet/`, including `.md` (e.g. `dependencies/iconv-issue.md`). */
+  /** Path relative to `.carnet/`, including `.md` (e.g. `dependencies/iconv-issue.md`). */
   relPath: string;
   /** Absolute filesystem path. */
   absPath: string;

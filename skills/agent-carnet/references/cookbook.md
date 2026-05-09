@@ -16,7 +16,7 @@ summary: "staging adapter — the thin proxy in front of POST /v1/stage"
 agent: claude-code
 tags: [vocab]
 related:
-  - .agent-carnet/vocab/payload-envelope.md
+  - .carnet/vocab/payload-envelope.md
   - src/staging/adapter.ts
 meta:
   vocab:

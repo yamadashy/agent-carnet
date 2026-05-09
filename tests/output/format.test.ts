@@ -13,7 +13,7 @@ import type { Carnet } from '../../src/types/index.js';
 
 const sample: Carnet = {
   relPath: 'deps/iconv.md',
-  absPath: '/abs/.agent-carnet/deps/iconv.md',
+  absPath: '/abs/.carnet/deps/iconv.md',
   frontmatter: {
     summary: 'iconv',
     agent: 'a',

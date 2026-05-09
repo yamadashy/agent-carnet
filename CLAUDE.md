@@ -8,7 +8,7 @@ inclusion: always
 
 ## Project Overview
 
-`agent-carnet` is a TypeScript CLI for AI agents and humans to record markdown notes, organized by category, with auto-expiry. Each carnet is one markdown file (`<cwd>/.agent-carnet/<category>/<slug>.md`) with YAML frontmatter. Lifespan defaults to 30 days and refreshes when the file is read.
+`agent-carnet` is a TypeScript CLI for AI agents and humans to record markdown notes, organized by category, with auto-expiry. Each carnet is one markdown file (`<cwd>/.carnet/<category>/<slug>.md`) with YAML frontmatter. Lifespan defaults to 30 days and refreshes when the file is read.
 
 The product positioning is "leather notebook in your jacket pocket" — not "AI brain". Code, docs, and error messages should keep that tone honest.
 
@@ -28,7 +28,7 @@ agent-carnet/
 │   │   ├── dates.ts            # Date/lifespan/expiry math
 │   │   ├── errors.ts           # CarnetError + exitCodeFor mapping
 │   │   ├── find.ts             # Pure-JS keyword search
-│   │   ├── init.ts             # .agent-carnet/ creation + .gitignore patching
+│   │   ├── init.ts             # .carnet/ creation + .gitignore patching
 │   │   ├── list.ts             # Filtered/sorted listing
 │   │   ├── paths.ts            # Path normalization + traversal defence
 │   │   ├── prune.ts            # Lifespan + .trash/ TTL sweep
@@ -56,7 +56,7 @@ agent-carnet/
 - **core/ is pure-ish logic**: no `process.exit`, no `console.log`. Throws `CarnetError` for known failure modes.
 - **output/ formatters are pluggable**: each function takes a typed result and returns a string. Human or JSON.
 - **types/ is the shared shape**: anything cross-module lives here.
-- **storage scope is `<cwd>/.agent-carnet/`** — Phase 1 has no global scope, no `--scope` flag.
+- **storage scope is `<cwd>/.carnet/`** — Phase 1 has no global scope, no `--scope` flag.
 - **ESM only**: `"type": "module"` everywhere.
 
 ## Error model
@@ -70,8 +70,8 @@ agent-carnet/
 
 Every CLI invocation (except `--help` / `--version`) runs `prune` lazily:
 
-- Walks `.agent-carnet/`, identifies carnets where `updated + lifespan < now`.
-- Moves them to `.agent-carnet/.trash/`.
+- Walks `.carnet/`, identifies carnets where `updated + lifespan < now`.
+- Moves them to `.carnet/.trash/`.
 - Hard-deletes anything in `.trash/` older than `AGENT_CARNET_TRASH_TTL` (default 7d).
 - Carnets with `keep: true` or `lifespan: never` are exempt.
 - Disable per-call with `--no-auto-prune`, or globally with `AGENT_CARNET_AUTO_PRUNE=false`.

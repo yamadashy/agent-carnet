@@ -17,7 +17,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
-`agent-carnet` (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file with YAML frontmatter under `.agent-carnet/<category>/<slug>.md`, ready to `grep`, `cat`, `git diff`, or edit by hand.
+`agent-carnet` (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file with YAML frontmatter under `.carnet/<category>/<slug>.md`, ready to `grep`, `cat`, `git diff`, or edit by hand.
 
 The agent saves notes explicitly — nothing is captured in the background. Each carnet has a 30-day default lifespan that resets every time it is read, so useful notes survive while stale ones drift to `.trash/` on their own. The agent calls `save`, `find`, `show`; you `cat`, `grep`, or edit. Same files, two ways in.
 
@@ -79,7 +79,7 @@ npx agent-carnet skill uninstall
 
 | Command | What it does |
 |---|---|
-| `init [--gitignore]` | Create `.agent-carnet/` in the current directory. `--gitignore` adds an entry. |
+| `init [--gitignore]` | Create `.carnet/` in the current directory. `--gitignore` adds an entry. |
 | `save <category>/<slug> --summary <s> --agent <a> [--tags] [--related] [--body or stdin] [--lifespan] [--keep] [--update]` | Create or update a carnet. |
 | `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort updated\|created\|name]` | List carnets, grouped by category. |
 | `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `updated`. |
@@ -120,7 +120,7 @@ Notes:
 ## Storage layout
 
 ```
-<cwd>/.agent-carnet/
+<cwd>/.carnet/
 ├── <category>/
 │   └── <slug>.md
 ├── <category>/<sub>/
@@ -130,7 +130,7 @@ Notes:
         └── <slug>.md
 ```
 
-Phase 1 stores carnets only under the current working directory. A global `~/.agent-carnet/` and `--scope` flag may come later.
+Phase 1 stores carnets only under the current working directory. A global `~/.carnet/` and `--scope` flag may come later.
 
 ## Configuration
 
@@ -146,8 +146,8 @@ Phase 1 has no config file. Behavior is controlled by environment variables:
 
 On every CLI invocation (except `--help` / `--version`), agent-carnet:
 
-1. Walks `.agent-carnet/` and identifies carnets whose `updated + lifespan` is in the past.
-2. Moves them to `.agent-carnet/.trash/`, preserving the original sub-path.
+1. Walks `.carnet/` and identifies carnets whose `updated + lifespan` is in the past.
+2. Moves them to `.carnet/.trash/`, preserving the original sub-path.
 3. Hard-deletes anything in `.trash/` whose mtime is older than `AGENT_CARNET_TRASH_TTL`.
 
 You can opt out per call with `--no-auto-prune`, or globally with `AGENT_CARNET_AUTO_PRUNE=false` and run `agent-carnet prune --auto` from CI instead. The latter is the recommended pattern for shared, git-tracked notebooks: each developer's local CLI does not silently delete other people's carnets.
@@ -174,7 +174,7 @@ summary: "staging adapter — the thin proxy in front of POST /v1/stage"
 agent: claude-code
 tags: [vocab]
 related:
-  - .agent-carnet/vocab/payload-envelope.md
+  - .carnet/vocab/payload-envelope.md
   - src/staging/adapter.ts
 meta:
   vocab:

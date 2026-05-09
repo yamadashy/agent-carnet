@@ -22,16 +22,16 @@ describe('rm', () => {
     await save(tmp.cwd, config, { path: 'deps/a', summary: 's', agent: 'a', body: '' });
     const r = await remove(tmp.cwd, 'deps/a');
     expect(r.trashed).toBe(true);
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/deps/a.md'))).toBe(false);
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/a.md'))).toBe(true);
+    expect(existsSync(join(tmp.cwd, '.carnet/deps/a.md'))).toBe(false);
+    expect(existsSync(join(tmp.cwd, '.carnet/.trash/deps/a.md'))).toBe(true);
   });
 
   it('hard-deletes when --hard is set', async () => {
     await save(tmp.cwd, config, { path: 'deps/a', summary: 's', agent: 'a', body: '' });
     const r = await remove(tmp.cwd, 'deps/a', { hard: true });
     expect(r.trashed).toBe(false);
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/deps/a.md'))).toBe(false);
-    expect(existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/a.md'))).toBe(false);
+    expect(existsSync(join(tmp.cwd, '.carnet/deps/a.md'))).toBe(false);
+    expect(existsSync(join(tmp.cwd, '.carnet/.trash/deps/a.md'))).toBe(false);
   });
 
   it('throws not_found for missing carnet', async () => {

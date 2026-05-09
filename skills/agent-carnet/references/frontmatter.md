@@ -18,7 +18,7 @@ updated: 2026-05-10                        # bumped by show / touch (refresh-on-
 tags: [compat, esm]                        # free-form labels; comma-separated on save
 related:                                   # paths or other carnet paths this entry points at
   - src/core/file/encoding.ts
-  - .agent-carnet/deps/iconv-issue.md
+  - .carnet/deps/iconv-issue.md
 lifespan: 90d                              # override default 30d; accepts 30d / 90d / 1y / never
 keep: true                                 # pin against auto-prune (lifespan ignored)
 
@@ -90,7 +90,7 @@ Setting `lifespan` is appropriate when a category of notes naturally lives longe
 `related:` accepts a list of strings. There is no enforced format; common conventions:
 
 - File paths relative to the project root: `src/core/file/encoding.ts`
-- Other carnet paths: `.agent-carnet/<category>/<slug>.md`
+- Other carnet paths: `.carnet/<category>/<slug>.md`
 - URLs: `https://github.com/.../issues/363`
 
 The CLI does not validate that the targets exist or follow them. They are documentation, not links the CLI traverses.

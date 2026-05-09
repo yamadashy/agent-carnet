@@ -5,7 +5,7 @@ description: "Use this skill when the user asks to save, recall, find, or organi
 
 # Agent Carnet
 
-A tiny CLI that gives you a shared markdown notebook on disk under `.agent-carnet/<category>/<slug>.md`. Notes have a 30-day default lifespan that resets every time they are read; useful ones survive, stale ones drift to `.trash/` automatically.
+A tiny CLI that gives you a shared markdown notebook on disk under `.carnet/<category>/<slug>.md`. Notes have a 30-day default lifespan that resets every time they are read; useful ones survive, stale ones drift to `.trash/` automatically.
 
 ## Quick reference
 
@@ -50,7 +50,7 @@ Before starting related work or when context might exist:
 - `--agent claude-code` is required.
 - `find` does NOT bump lifespan. `show` does. Bumping requires actually reading the body.
 - The 30-day expiry is automatic — do not manually clean up. `keep: true` pins permanent notes.
-- Auto-prune runs on every CLI invocation; deleted carnets land in `.agent-carnet/.trash/` for 7 days before hard delete.
+- Auto-prune runs on every CLI invocation; deleted carnets land in `.carnet/.trash/` for 7 days before hard delete.
 
 ## Path conventions
 
