@@ -143,6 +143,59 @@ You can opt out per call with `--no-auto-prune`, or globally with `AGENT_CARNET_
 
 `show` bumps `updated` to today by default — reading a carnet is the only way to extend its life. `find` does **not** refresh; matching the keyword is not the same as actually reading the note. Pass `--no-touch` to `show` if you need a peek without leaving fingerprints.
 
+## Cookbook
+
+agent-carnet is just a folder of markdown files; useful patterns emerge from how you tag and link them, not from special folders or commands. The example below stays inside the existing CLI surface — only the `tags:` field carries the convention, so the carnet remains a portable markdown file you can also open in Obsidian, VS Code, or any editor.
+
+### Vocabulary alignment
+
+Multiple agents (and humans) routinely invent different names for the same concept — Claude Code calls something "staging adapter", Codex writes "proxy layer", a human's note uses "forward middleware". By the time anyone notices, three identifiers have leaked into the codebase.
+
+Use one carnet per term, tagged with `vocab`, to make naming a deliberate, visible act:
+
+```yaml
+---
+summary: "staging adapter — the thin proxy in front of POST /v1/stage"
+agent: claude-code
+tags: [vocab]
+related:
+  - .agent-carnet/vocab/payload-envelope.md
+  - src/staging/adapter.ts
+---
+
+# staging adapter
+
+## Definition
+The thin proxy that fronts the production gateway and reshapes incoming
+requests into the `payload-envelope` format. Nothing more.
+
+## Why this name
+"proxy" is overloaded; "middleware" collides with the Express concept.
+"staging adapter" leaves no doubt about which layer is meant.
+
+## Rejected alternatives
+- proxy layer
+- forward middleware
+- request shim
+```
+
+The agent-side flow is small. Before naming a new concept, the agent checks whether someone already named it:
+
+```bash
+agent-carnet find <candidate> --in tags
+```
+
+If a term wins out, the canonical version is saved once, and every subsequent agent (Claude Code, Codex, Cursor, ...) can find it the same way:
+
+```bash
+echo "..." | agent-carnet save vocab/staging-adapter \
+  --summary "staging adapter — the thin proxy in front of POST /v1/stage" \
+  --agent claude-code \
+  --tags vocab
+```
+
+Refresh-on-use does the rest: synonyms that keep getting cited stay alive, ones that nobody invokes drift to `.trash/` automatically. The `vocab` tag is purely a project-level convention — the file is just markdown, and agent-carnet itself does not know or care that it represents a term.
+
 ## How it differs from Claude memory and agent-memory skill
 
 |   | Claude built-in memory | agent-memory skill | **agent-carnet** |
