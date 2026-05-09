@@ -1,13 +1,29 @@
 import { join } from 'node:path';
-import type { PruneReport } from '../types/index.js';
+import type { Carnet, PruneReport } from '../types/index.js';
 import type { RuntimeConfig } from './config.js';
-import { expiryDate, parseLifespan } from './dates.js';
+import { daysUntil, expiryDate, parseLifespan } from './dates.js';
 import { trashRoot } from './paths.js';
 import { fileMtime, hardDelete, loadAllCarnets, moveToTrash, walkMarkdown } from './storage.js';
+
+/** What an interactive prompter is told about each expired carnet. */
+export interface PruneCandidate {
+  carnet: Carnet;
+  /** Days the carnet has been expired (positive integer). */
+  expiredDays: number;
+}
+
+/** A user-visible answer for the per-candidate prompt. */
+export type PruneDecision = 'yes' | 'no' | 'quit';
 
 export interface PruneOptions {
   dryRun?: boolean;
   includeTrash?: boolean;
+  /**
+   * Per-candidate decision callback. Returning `quit` aborts the loop early
+   * (everything already accepted in this pass is kept). The CLI layer plugs
+   * in its `confirm` helper here; core stays I/O-free.
+   */
+  onCandidate?: (candidate: PruneCandidate) => Promise<PruneDecision> | PruneDecision;
 }
 
 /**
@@ -36,6 +52,12 @@ export async function prune(
     }
     if (exp === null) continue;
     if (exp.getTime() <= now.getTime()) {
+      if (options.onCandidate) {
+        const expiredDays = Math.max(0, -daysUntil(exp, now));
+        const decision = await options.onCandidate({ carnet: c, expiredDays });
+        if (decision === 'quit') break;
+        if (decision === 'no') continue;
+      }
       if (!options.dryRun) {
         await moveToTrash(cwd, c.relPath);
       }
