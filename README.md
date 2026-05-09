@@ -59,6 +59,22 @@ Or install once:
 npm install -g agent-carnet
 ```
 
+## Install the Claude Code skill
+
+agent-carnet ships a bundled `SKILL.md` so [Claude Code](https://docs.anthropic.com/claude/docs/claude-code) knows when to reach for the CLI. Install it once into your global skills folder and every Claude Code session can use it; pass `--here` to scope the skill to a single project instead. Both are reversible (`skill uninstall`) and idempotent.
+
+```bash
+# Global install — drops SKILL.md into ~/.claude/skills/agent-carnet/
+npx agent-carnet skill install
+
+# Project-local install — drops SKILL.md into <cwd>/.claude/skills/agent-carnet/
+npx agent-carnet skill install --here
+
+# Inspect or remove
+npx agent-carnet skill path
+npx agent-carnet skill uninstall
+```
+
 ## Commands
 
 | Command | What it does |
@@ -73,6 +89,9 @@ npm install -g agent-carnet
 | `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
 | `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
 | `import [src] [--dry-run]` | Migrate notes from an existing `memories/` folder (lifts `status:` into `tags:`). |
+| `skill install [--here] [--force]` | Install the bundled Claude Code `SKILL.md` (default: `~/.claude/skills/agent-carnet/`; `--here` for the current project). |
+| `skill uninstall [--here]` | Remove the installed `SKILL.md` (idempotent). |
+| `skill path [--here]` | Print the absolute install target without touching the filesystem. |
 
 Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
 

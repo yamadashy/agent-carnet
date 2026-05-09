@@ -4,6 +4,23 @@ All notable changes to `agent-carnet` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-05-04
+
+### Added
+
+- `skill install` / `skill uninstall` / `skill path` — manage a bundled
+  Claude Code `SKILL.md` so the agent learns when to reach for the CLI.
+  Defaults to the user's global skills folder
+  (`~/.claude/skills/agent-carnet/SKILL.md`); `--here` scopes the install to
+  `<cwd>/.claude/skills/agent-carnet/SKILL.md` instead. `install` refuses to
+  overwrite an existing file unless `--force` is passed (exit code 4 /
+  `conflict`); `uninstall` is idempotent and cleans up the empty
+  `agent-carnet/` parent dir but never a non-empty one.
+- Bundled `skills/agent-carnet/SKILL.md` shipped in the npm tarball
+  (`files: ["dist/", "skills/", ...]`). The CLI resolves the bundled file
+  relative to its own `import.meta.url` so the same lookup works for both
+  `dist/bin/agent-carnet.mjs` and source-mode runs via tsx.
+
 ## [0.1.1] - 2026-05-09
 
 ### Added
