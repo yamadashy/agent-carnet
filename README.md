@@ -17,11 +17,9 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
-`agent-carnet` is a tiny CLI that gives any AI coding agent — Claude Code, Codex, Cursor, you name it — a shared notebook on disk. Each note is a single markdown file with YAML frontmatter under `.agent-carnet/<category>/<slug>.md`, the kind of file you can `grep`, `cat`, `git diff`, and read with your own eyes, no LLM in the loop.
+`agent-carnet` is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file with YAML frontmatter under `.agent-carnet/<category>/<slug>.md`, ready to `grep`, `cat`, `git diff`, or edit by hand.
 
-Where most "AI memory" systems quietly hoard everything an agent ever did into an opaque database, agent-carnet does the opposite. The agent has to **decide** something is worth writing, names it, and the file lives there on disk for anyone to read or edit. Notes carry a 30-day default lifespan that resets every time they're read — useful ones survive, stale ones drift to `.trash/` on their own. The agent calls `save`, `find`, `show`; you `cat`, `grep`, or edit by hand. Same files, two ways in.
-
-The mental model is the leather notebook a quietly meticulous agent slips from a jacket pocket, jots a single line into, and snaps shut. Not a cybernetic brain implant — just a small, honest carnet that any agent or human can pick up and read.
+The agent saves notes explicitly — nothing is captured in the background. Each carnet has a 30-day default lifespan that resets every time it is read, so useful notes survive while stale ones drift to `.trash/` on their own. The agent calls `save`, `find`, `show`; you `cat`, `grep`, or edit. Same files, two ways in.
 
 <!-- TODO: capture ./docs/screenshots/terminal.png (a side-by-side of `agent-carnet list` and `agent-carnet show`) and uncomment.
 <p align="center">
@@ -29,17 +27,15 @@ The mental model is the leather notebook a quietly meticulous agent slips from a
 </p>
 -->
 
-If you want a deeper dive into the philosophy and the road from the `agent-memory` skill to `agent-carnet`, the design docs live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
+Design docs and the road from the `agent-memory` skill live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
 
 ## Why agent-carnet
 
-**Records, not memories.** Most "AI memory" tools think of an agent's notes as model state to be reconstructed via retrieval. agent-carnet treats them as files. If the file is on disk, the knowledge is there; if not, it is gone. You can `grep`, `cat`, `git diff`, hand-edit, or copy a carnet between projects — no LLM in the loop, no opaque database, no service to call.
+**Records, not memories.** Notes are files, not opaque model state. Grep them, diff them, hand-edit them, copy them between projects — no LLM, no database, no service to call.
 
-**Agent-agnostic by default.** Anything that can shell out can read and write the same notebook — Claude Code, Codex, Cursor, a cron job, you. There is no SDK, no MCP requirement, no daemon to spin up. Multiple agents working in the same project see the same notes the same way.
+**Agent-agnostic.** Anything that can shell out reads and writes the same notebook. No SDK, no MCP, no daemon. Multiple agents in the same project see the same notes the same way.
 
-**Safe to forget.** Each carnet has a 30-day default lifespan that resets every time it is actually read. Notes that earn re-use survive; notes that do not drift to `.trash/` on their own. Auto-pruning runs on every CLI invocation, the trash itself has a TTL so deletes are recoverable for a week, and `keep: true` pins anything you would rather not lose.
-
-**Honest framing.** No "brain", no "cognitive memory", no benchmarks against ICLR papers. agent-carnet is a small CLI that manages a folder of markdown files with a polite expiry policy — and that turns out to be enough for the day-to-day "remember why we did it this way" use case.
+**Safe to forget.** The 30-day lifespan plus refresh-on-use means useful notes earn their keep and the rest fades. Auto-prune routes everything through `.trash/` with a 7-day grace period, and `keep: true` pins anything you would rather not lose.
 
 ## Quick start
 
