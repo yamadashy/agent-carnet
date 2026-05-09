@@ -8,6 +8,9 @@ import { normalizeCarnetPath, storageRoot } from './paths.js';
 import { readCarnet, writeCarnet } from './storage.js';
 import { validateFrontmatter } from './validate.js';
 
+/** Frontmatter keys the CLI itself owns. Everything else is preserved on --update. */
+const CLI_MANAGED_FIELDS = new Set(['summary', 'agent', 'created', 'updated', 'tags', 'related', 'lifespan', 'keep']);
+
 export interface SaveInput {
   path: string;
   summary: string;
@@ -42,13 +45,19 @@ export async function save(
 
   const dateStr = today(now);
   let createdDate = dateStr;
+  const prevExtras: Record<string, unknown> = {};
   if (exists) {
-    // Preserve the original creation date when updating; only `updated` rolls
-    // forward.
+    // On --update, preserve the original creation date and any user-supplied
+    // frontmatter keys the CLI doesn't manage itself (e.g. `meta`, custom
+    // extension fields). The CLI owns its declared fields; everything else is
+    // round-tripped untouched.
     try {
       const prev = await readCarnet(absPath, relPath);
       if (typeof prev.frontmatter.created === 'string') {
         createdDate = prev.frontmatter.created;
+      }
+      for (const [k, v] of Object.entries(prev.frontmatter)) {
+        if (!CLI_MANAGED_FIELDS.has(k)) prevExtras[k] = v;
       }
     } catch {
       // Fall through with today's date if the prior file is unreadable.
@@ -56,6 +65,7 @@ export async function save(
   }
 
   const fm: Partial<CarnetFrontmatter> = {
+    ...prevExtras,
     summary: input.summary,
     agent: input.agent,
     created: createdDate,

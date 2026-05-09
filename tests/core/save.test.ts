@@ -93,4 +93,57 @@ describe('save', () => {
     );
     expect(r.expires).toBe('2026-05-11');
   });
+
+  it('preserves user-supplied frontmatter (e.g. meta) on --update', async () => {
+    // Create the carnet via the CLI to get the on-disk path, then overwrite
+    // the file with a hand-built version that includes a `meta:` extension
+    // namespace as a downstream tool / human / Obsidian plugin would.
+    const created = await save(tmp.cwd, config, {
+      path: 'vocab/staging-adapter',
+      summary: 'staging adapter',
+      agent: 'claude-code',
+      body: 'definition body',
+      tags: ['vocab'],
+    });
+    const fs = await import('node:fs/promises');
+    const handBuilt = [
+      '---',
+      "summary: 'staging adapter'",
+      "agent: 'claude-code'",
+      "created: '2026-05-09'",
+      "updated: '2026-05-09'",
+      'tags:',
+      '  - vocab',
+      'meta:',
+      '  vocab:',
+      "    canonical: 'staging adapter'",
+      '    aliases:',
+      '      - proxy layer',
+      '      - forward middleware',
+      '---',
+      '',
+      'definition body',
+      '',
+    ].join('\n');
+    await fs.writeFile(created.carnet.absPath, handBuilt, 'utf-8');
+
+    // Now update via the CLI: meta and any other non-CLI-managed fields must
+    // round-trip untouched.
+    await save(tmp.cwd, config, {
+      path: 'vocab/staging-adapter',
+      summary: 'staging adapter — refined',
+      agent: 'claude-code',
+      body: 'updated definition',
+      tags: ['vocab'],
+      update: true,
+    });
+
+    const after = await fs.readFile(created.carnet.absPath, 'utf-8');
+    expect(after).toContain('summary: staging adapter — refined');
+    expect(after).toContain('vocab:');
+    expect(after).toContain('canonical: staging adapter');
+    expect(after).toContain('proxy layer');
+    expect(after).toContain('forward middleware');
+    expect(after).toContain('updated definition');
+  });
 });
