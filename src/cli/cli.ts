@@ -1,13 +1,10 @@
-import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { readConfig } from '../core/config.js';
 import { CarnetError } from '../core/errors.js';
 import { find as findCarnets } from '../core/find.js';
-import { importFrom } from '../core/import.js';
 import { init } from '../core/init.js';
 import { list } from '../core/list.js';
 import { move } from '../core/move.js';
-import { storageRoot } from '../core/paths.js';
 import { type PruneCandidate, type PruneDecision, prune } from '../core/prune.js';
 import { remove } from '../core/rm.js';
 import { save } from '../core/save.js';
@@ -119,9 +116,6 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
         return;
       case 'prune':
         await cmdPrune(cwd, args, flags);
-        return;
-      case 'import':
-        await cmdImport(cwd, args, flags);
         return;
       case 'skill':
         await cmdSkill(cwd, args, flags);
@@ -453,25 +447,5 @@ async function cmdSkill(cwd: string, args: string[], flags: RunFlags): Promise<v
     }
     default:
       throw new CarnetError('validation_error', `unknown skill subcommand: ${sub}`, 'one of: install, uninstall, path');
-  }
-}
-
-async function cmdImport(cwd: string, args: string[], flags: RunFlags): Promise<void> {
-  const parsed = parseArgs({
-    args,
-    allowPositionals: true,
-    options: { 'dry-run': { type: 'boolean' } },
-  });
-  const src = parsed.positionals[0] ?? 'memories';
-  const report = await importFrom(cwd, src, { dryRun: parsed.values['dry-run'] as boolean | undefined });
-  if (flags.json) {
-    console.log(JSON.stringify({ ok: true, ...report, destination: storageRoot(cwd) }, null, 2));
-  } else {
-    console.log(`imported: ${report.imported.length} (from ${resolve(cwd, src)} to ${storageRoot(cwd)})`);
-    for (const p of report.imported) console.log(`  + ${p}`);
-    if (report.skipped.length > 0) {
-      console.log(`skipped: ${report.skipped.length}`);
-      for (const p of report.skipped) console.log(`  - ${p}`);
-    }
   }
 }

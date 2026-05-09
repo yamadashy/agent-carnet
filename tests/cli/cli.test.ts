@@ -1,4 +1,3 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { run } from '../../src/cli/cli.js';
@@ -219,16 +218,6 @@ describe('cli', () => {
     const fs2 = await import('node:fs');
     expect(fs2.existsSync(file)).toBe(false);
     expect(fs2.existsSync(join(tmp.cwd, '.agent-carnet/.trash/deps/old.md'))).toBe(true);
-  });
-
-  it('import migrates skill memories format', async () => {
-    await captureRun(['init'], tmp.cwd);
-    const memDir = join(tmp.cwd, 'memories', 'deps');
-    mkdirSync(memDir, { recursive: true });
-    writeFileSync(join(memDir, 'iconv.md'), '---\nsummary: iconv\nstatus: open\n---\nbody\n', 'utf-8');
-    const r = await captureRun(['import'], tmp.cwd);
-    expect(r.exitCode).toBeNull();
-    expect(r.stdout.join('\n')).toContain('imported');
   });
 
   it('touch bumps updated and emits the updated date', async () => {

@@ -88,7 +88,6 @@ npx agent-carnet skill uninstall
 | `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
 | `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
 | `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
-| `import [src] [--dry-run]` | Migrate notes from an existing `memories/` folder (lifts `status:` into `tags:`). |
 | `skill install [--here] [--force]` | Install the bundled Claude Code `SKILL.md` (default: `~/.claude/skills/agent-carnet/`; `--here` for the current project). |
 | `skill uninstall [--here]` | Remove the installed `SKILL.md` (idempotent). |
 | `skill path [--here]` | Print the absolute install target without touching the filesystem. |

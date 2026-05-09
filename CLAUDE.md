@@ -28,7 +28,6 @@ agent-carnet/
 │   │   ├── dates.ts            # Date/lifespan/expiry math
 │   │   ├── errors.ts           # CarnetError + exitCodeFor mapping
 │   │   ├── find.ts             # Pure-JS keyword search
-│   │   ├── import.ts           # agent-memory skill -> .agent-carnet/ migration
 │   │   ├── init.ts             # .agent-carnet/ creation + .gitignore patching
 │   │   ├── list.ts             # Filtered/sorted listing
 │   │   ├── paths.ts            # Path normalization + traversal defence

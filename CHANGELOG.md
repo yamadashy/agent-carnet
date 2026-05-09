@@ -21,6 +21,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   relative to its own `import.meta.url` so the same lookup works for both
   `dist/bin/agent-carnet.mjs` and source-mode runs via tsx.
 
+### Removed
+
+- `import` subcommand. It had a single hard-coded source format that very
+  few users ever needed; nothing else in the CLI assumes its existence.
+  Migrating an arbitrary markdown notes folder is a one-shot script the
+  user can write in seconds against the documented frontmatter schema.
+
 ## [0.1.1] - 2026-05-09
 
 ### Added
@@ -60,6 +67,4 @@ Initial release.
 - `--json` output for every command and a structured stderr error envelope
   (`code` / `message` / `hint`) with stable exit codes.
 - Path-traversal defence on every user-supplied carnet path.
-- `import` from the legacy `agent-memory` skill `memories/` folder, lifting
-  `status: <v>` into `tags: [status:<v>]` so no information is lost.
 - npm provenance + OIDC publish workflow.

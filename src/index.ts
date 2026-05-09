@@ -3,7 +3,6 @@
 export { type RuntimeConfig, readConfig } from './core/config.js';
 export { CarnetError, exitCodeFor } from './core/errors.js';
 export { type FindHit, type FindOptions, find, type SearchScope } from './core/find.js';
-export { type ImportOptions, type ImportReport, importFrom } from './core/import.js';
 export { type InitOptions, type InitResult, init } from './core/init.js';
 export { type ListEntry, type ListOptions, list, type SortKey } from './core/list.js';
 export { categoryOf, normalizeCarnetPath, slugOf, storageRoot, trashRoot } from './core/paths.js';
