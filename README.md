@@ -27,8 +27,6 @@ The agent saves notes explicitly — nothing is captured in the background. Each
 </p>
 -->
 
-Design docs live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
-
 ## Why agent-carnet
 
 **Records, not memories.** Notes are files, not opaque model state. Grep them, diff them, hand-edit them, copy them between projects — no LLM, no database, no service to call.
@@ -228,8 +226,6 @@ src/
 ├── output/               # human + JSON formatters
 └── types/                # shared types
 ```
-
-Phase 2+ work is tracked in the upstream design docs at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
 
 ## License
 

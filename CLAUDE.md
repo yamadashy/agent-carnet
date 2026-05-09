@@ -116,13 +116,8 @@ Deferred to Phase 2+: `touch`, `move`, `rm`, `init --with-ci`, polished interact
 
 ## Design source of truth
 
-Phase 0 design docs live at:
-`https://github.com/***/tree/main/project/agent-carnet`
-
-Specifically:
-- `README.md` — concept and storage model
-- `CLI.md` — canonical CLI spec
-- `ROADMAP.md` — phase boundaries
-- `BACKGROUND.md` — design philosophy
-
-Refer back to those when extending; this CLAUDE.md only summarises.
+The public-facing source of truth is this repository's `README.md`. The
+maintainer keeps additional planning notes in a private notebook; do not
+attempt to read or link to them from anything in this repo. If a design
+question can't be answered from `README.md` plus this `CLAUDE.md`, ask
+the maintainer.
