@@ -52,12 +52,13 @@ npm install -g agent-carnet
 | `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort updated\|created\|name]` | List carnets, grouped by category. |
 | `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `updated`. |
 | `show <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. By default this bumps `updated` to today. |
-| `prune [--dry-run] [--auto] [--include-trash]` | Move expired carnets to `.trash/`; optionally hard-delete from `.trash/`. |
+| `touch <category>/<slug>` | Bump `updated` to today **without** reading the body — keep a carnet alive cheaply. |
+| `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
+| `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
+| `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
 | `import [src] [--dry-run]` | Migrate from the legacy `memories/` (agent-memory skill) format. |
 
 Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
-
-> **Phase 1 scope.** `touch`, `move`, and `rm` are planned for Phase 2. See the [roadmap](https://github.com/***/blob/main/project/agent-carnet/ROADMAP.md).
 
 ## Frontmatter schema
 
