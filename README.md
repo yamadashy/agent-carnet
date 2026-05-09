@@ -27,7 +27,7 @@ The agent saves notes explicitly — nothing is captured in the background. Each
 </p>
 -->
 
-Design docs and the road from the `agent-memory` skill live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
+Design docs live at [***/project/agent-carnet](https://github.com/***/tree/main/project/agent-carnet).
 
 ## Why agent-carnet
 
@@ -74,7 +74,7 @@ npm install -g agent-carnet
 | `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
 | `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
 | `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
-| `import [src] [--dry-run]` | Migrate from the legacy `memories/` (agent-memory skill) format. |
+| `import [src] [--dry-run]` | Migrate notes from an existing `memories/` folder (lifts `status:` into `tags:`). |
 
 Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
 
@@ -98,7 +98,6 @@ meta:                                    # optional, free-form extension namespa
 ```
 
 Notes:
-- There is **no `status` field**. The legacy skill had one; `agent-carnet import` lifts `status: <v>` into `tags: [status:<v>]` so no information is lost.
 - `lifespan` accepts duration strings (`30d`, `90d`, `1y`) and the literal `never`.
 - `meta:` is a deliberate extension point for tools and conventions that need structured data beyond what `tags:` and `related:` express. The CLI does not interpret `meta:` itself — it preserves the full subtree on every read/write so downstream consumers (an Obsidian plugin, a sibling agent, your own script) can read and act on it. Namespace keys under the convention name (`meta.vocab.*`, `meta.hypothesis.*`) so different extensions don't collide.
 
@@ -198,16 +197,15 @@ echo "..." | agent-carnet save vocab/staging-adapter \
 
 Refresh-on-use does the rest: synonyms that keep getting cited stay alive, ones that nobody invokes drift to `.trash/` automatically. The `vocab` tag is purely a project-level convention — the file is just markdown, and agent-carnet itself does not know or care that it represents a term.
 
-## How it differs from Claude memory and agent-memory skill
+## How it differs from built-in agent memory
 
-|   | Claude built-in memory | agent-memory skill | **agent-carnet** |
-|---|---|---|---|
-| Agents that can use it | Claude Code only | Claude Code only | Any (CLI = shell) |
-| Storage | Vendor-managed | `memories/*.md` | `.agent-carnet/*.md` |
-| File-direct edits | No | Yes | Yes |
-| Lifespan enforcement | n/a | LLM-judged | CLI-enforced (auto-prune to `.trash/`) |
-| Frontmatter validation | n/a | None | CLI-enforced (`summary`/`agent` required) |
-| Migration | n/a | n/a | `agent-carnet import memories/` |
+|   | Vendor-managed agent memory | **agent-carnet** |
+|---|---|---|
+| Agents that can use it | One vendor's tool only | Any (the interface is `bash`) |
+| Storage | Opaque, server- or vendor-managed | Plain markdown files on your disk |
+| File-direct edits | Not possible | Encouraged — open in any editor |
+| Lifespan enforcement | LLM-judged or none | CLI-enforced (auto-prune to `.trash/`) |
+| Frontmatter validation | n/a | CLI-enforced (`summary`/`agent` required) |
 
 `agent-carnet` is intentionally less ambitious than vendor memories: it does not try to summarize, embed, or reason about your notes. It is just a tidy, auto-expiring file shelf you can share between agents.
 
