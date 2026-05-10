@@ -19,6 +19,7 @@
   },
   "files": [
     "dist/",
+    "docs/logo.svg",
     "skills/",
     "README.md",
     "LICENSE"

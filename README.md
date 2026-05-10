@@ -1,7 +1,5 @@
 <div align="center">
-  <!-- TODO: drop ./docs/logo.svg in once the leather-notebook icon is ready, then uncomment.
   <img src="./docs/logo.svg" alt="Agent Carnet" width="180" height="auto" />
-  -->
   <h1>Agent Carnet 📓</h1>
   <p align="center">
     <span><i>un petit carnet</i> for AI agents — and the humans who work with them</span>
