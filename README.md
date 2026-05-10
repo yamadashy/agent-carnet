@@ -141,7 +141,30 @@ Phase 1 has no config file. Behavior is controlled by environment variables:
 
 ## Lifespan
 
-Every carnet has an expiry date. It is computed from two frontmatter fields:
+Every carnet flows through this lifecycle. Useful notes get reset by use, idle ones decay to `.trash/`, and stale ones eventually disappear:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    [*] --> Live: save
+
+    Live --> Live: show (read body)<br/>bump last_used
+    Live --> Live: used (apply)<br/>bump last_used + use_count
+    Live --> Live: save --update<br/>bump updated + last_used
+
+    Live --> Trash: auto-prune<br/>expiry passed
+    Trash --> Live: restore (mv back)
+    Trash --> [*]: hard delete<br/>after 7-day grace
+
+    note right of Live
+      expiry = last_used + lifespan
+      default lifespan: 30d
+      keep: true → never expires
+    end note
+```
+
+The expiry date is computed from two frontmatter fields:
 
 ```
 expiry = last_used + lifespan
@@ -150,7 +173,7 @@ expiry = last_used + lifespan
 - `last_used` — last time the carnet was read or applied (YYYY-MM-DD, UTC, CLI-managed). Falls back to `updated` for legacy carnets that pre-date the field.
 - `lifespan` — duration string (`30d`, `90d`, `1y`, `never`). Defaults to `AGENT_CARNET_DEFAULT_LIFESPAN` (`30d`) when omitted.
 
-When `expiry <= today`, the carnet is considered stale.
+When `expiry <= today`, the carnet is considered stale and auto-prune moves it to `.trash/` on the next CLI invocation.
 
 ### Four CLI-managed dates / counters
 
@@ -161,12 +184,23 @@ When `expiry <= today`, the carnet is considered stale.
 | `last_used` | `save`, `show`, `used` | Last interaction. **Drives expiry.** |
 | `use_count` | `used` (only) | Explicit-use counter. A reference signal of importance. |
 
-### Refresh-on-use
+### Refresh-on-use: two strengths of "use"
 
-A carnet's life is extended whenever it is **used**. There are two strengths of "use":
+A carnet's life is extended whenever it is **used**. The CLI distinguishes two strengths so the same notebook can express "kept alive because it gets read" and "matters enough to be cited as load-bearing":
+
+```mermaid
+flowchart LR
+    A[carnet read?] -->|find / list| B[no signal<br/>lifespan unchanged]
+    A -->|show| C[weak signal<br/>last_used = today]
+    A -->|used| D[strong signal<br/>last_used = today<br/>use_count + 1]
+
+    style B stroke-dasharray: 4 2
+    style C stroke-width:2px
+    style D stroke-width:3px
+```
 
 - **Weak signal — `show`.** Reading the body resets the lifespan. The agent bothered to pull the carnet into context, which is enough to keep it alive.
-- **Strong signal — `used`.** After applying a carnet's content (fixing a bug with the recorded fix, citing a debunked hypothesis, reusing a vocabulary entry), call `agent-carnet used <path>`. This bumps `last_used` *and* increments `use_count` — the latter is a durable importance metric you can sort by (`agent-carnet list --sort use_count`) or that downstream tooling can read.
+- **Strong signal — `used`.** After applying a carnet's content (fixing a bug with the recorded fix, citing a debunked hypothesis, reusing a vocabulary entry), call `agent-carnet used <path>`. This bumps `last_used` *and* increments `use_count` — a durable importance metric you can sort by (`agent-carnet list --sort use_count`) or that downstream tooling can read.
 
 | Action | `updated` | `last_used` | `use_count` |
 |---|---|---|---|
@@ -180,17 +214,13 @@ A carnet's life is extended whenever it is **used**. There are two strengths of 
 
 Useful notes survive because they get read. Important notes accumulate `use_count` and rise to the top of importance-sorted views. Notes nobody touches drift toward expiry on their own — no manual triage required.
 
-### State transitions
+### Live, trash, and hard delete
 
-```
-[live] ──auto-prune──▶ [.trash/] ──TTL exceeded──▶ [hard delete]
-   ▲                       │
-   └────── restore ────────┘     (just `mv` the file back)
-```
+The lifecycle diagram above has three states on disk:
 
 1. **live** (`.carnet/<category>/<slug>.md`) — the working notebook.
 2. **trash** (`.carnet/.trash/<category>/<slug>.md`) — soft-deleted carnets, kept for `AGENT_CARNET_TRASH_TTL` (default `7d`). Original sub-path is preserved, so restoring is `mv .carnet/.trash/foo/bar.md .carnet/foo/bar.md`.
-3. **hard delete** — anything in `.trash/` whose mtime is older than the trash TTL is unlinked permanently.
+3. **hard delete** — anything in `.trash/` whose mtime is older than the trash TTL is unlinked permanently. This is the only step that loses data.
 
 ### Auto-prune
 
