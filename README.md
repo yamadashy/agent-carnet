@@ -73,7 +73,7 @@ Every carnet flows through this lifecycle. Useful notes get reset by use, idle o
 
 ```mermaid
 stateDiagram-v2
-    direction LR
+    direction TB
 
     [*] --> Live: save
 
@@ -84,12 +84,6 @@ stateDiagram-v2
     Live --> Trash: auto-prune<br/>expiry passed
     Trash --> Live: restore (mv back)
     Trash --> [*]: hard delete<br/>after 7-day grace
-
-    note right of Live
-      expiry = last_used + lifespan
-      default lifespan: 30d
-      keep: true → never expires
-    end note
 ```
 
 The expiry date is computed from two frontmatter fields:
@@ -117,7 +111,7 @@ When `expiry <= today`, the carnet is considered stale and auto-prune moves it t
 A carnet's life is extended whenever it is **used**. The CLI distinguishes two strengths so the same notebook can express "kept alive because it gets read" and "matters enough to be cited as load-bearing":
 
 ```mermaid
-flowchart LR
+flowchart TB
     A[carnet read?] -->|find / list| B[no signal<br/>lifespan unchanged]
     A -->|show| C[weak signal<br/>last_used = today]
     A -->|used| D[strong signal<br/>last_used = today<br/>use_count + 1]
