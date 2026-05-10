@@ -17,9 +17,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
-`agent-carnet` (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file with YAML frontmatter under `.carnet/<category>/<slug>.md`, ready to `grep`, `cat`, `git diff`, or edit by hand.
-
-The agent saves notes explicitly — nothing is captured in the background. Each carnet has a 30-day default lifespan that resets every time it is read, so useful notes survive while stale ones drift to `.trash/` on their own. The agent calls `save`, `find`, `show`; you `cat`, `grep`, or edit. Same files, two ways in.
+`agent-carnet` (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file under `.carnet/<category>/<slug>.md`.
 
 <!-- TODO: capture ./docs/screenshots/terminal.png (a side-by-side of `agent-carnet list` and `agent-carnet show`) and uncomment.
 <p align="center">
@@ -29,11 +27,9 @@ The agent saves notes explicitly — nothing is captured in the background. Each
 
 ## Why agent-carnet
 
-**Records, not memories.** Notes are files, not opaque model state. Grep them, diff them, hand-edit them, copy them between projects — no LLM, no database, no service to call.
+**Notes are just markdown files.** Most agent-memory tools hide notes inside a vector DB or proprietary store, so you cannot `grep`, `git diff`, or hand-edit them. agent-carnet keeps every note as a plain `.md` file under `.carnet/`. The agent writes through the CLI; you read and review the exact same files with the tools you already use. Anything that can shell out — Claude Code, Codex, Cursor, your own scripts — works against the same notebook. No SDK, no MCP, no daemon.
 
-**Agent-agnostic.** Anything that can shell out reads and writes the same notebook. No SDK, no MCP, no daemon. Multiple agents in the same project see the same notes the same way.
-
-**Safe to forget.** The 30-day lifespan plus refresh-on-use means useful notes earn their keep and the rest fades. Auto-prune routes everything through `.trash/` with a 7-day grace period, and `keep: true` pins anything you would rather not lose.
+**Stale notes disappear on their own.** A note-store that only grows is a note-store that rots. Every carnet has a 30-day lifespan that resets each time it is read or written, so useful notes survive and the rest drift to `.trash/` automatically (with a 7-day grace period before deletion). Pin anything you cannot afford to lose with `keep: true`. The notebook stays alive without manual cleanup.
 
 ## Quick start
 
@@ -139,21 +135,62 @@ Phase 1 has no config file. Behavior is controlled by environment variables:
 | `AGENT_CARNET_DEFAULT_LIFESPAN` | `30d` | Default per-carnet expiry. |
 | `AGENT_CARNET_TRASH_TTL` | `7d` | How long `.trash/` keeps soft-deleted carnets before hard delete. |
 
-## Auto-prune behavior
+## Lifespan
 
-On every CLI invocation (except `--help` / `--version`), agent-carnet:
+Every carnet has an expiry date. It is computed from two frontmatter fields:
 
-1. Walks `.carnet/` and identifies carnets whose `updated + lifespan` is in the past.
-2. Moves them to `.carnet/.trash/`, preserving the original sub-path.
-3. Hard-deletes anything in `.trash/` whose mtime is older than `AGENT_CARNET_TRASH_TTL`.
+```
+expiry = updated + lifespan
+```
 
-You can opt out per call with `--no-auto-prune`, or globally with `AGENT_CARNET_AUTO_PRUNE=false` and run `agent-carnet prune --auto` from CI instead. The latter is the recommended pattern for shared, git-tracked notebooks: each developer's local CLI does not silently delete other people's carnets.
+- `updated` — last time the carnet was touched (YYYY-MM-DD, UTC, CLI-managed).
+- `lifespan` — duration string (`30d`, `90d`, `1y`, `never`). Defaults to `AGENT_CARNET_DEFAULT_LIFESPAN` (`30d`) when omitted.
 
-`keep: true` and `lifespan: never` carnets are always exempt.
+When `expiry <= today`, the carnet is considered stale.
 
 ### Refresh-on-use
 
-`show` bumps `updated` to today by default — reading a carnet is the only way to extend its life. `find` does **not** refresh; matching the keyword is not the same as actually reading the note. Pass `--no-touch` to `show` if you need a peek without leaving fingerprints.
+The only way to extend a carnet's life is to **use it**. Reading or writing it bumps `updated` to today, which pushes the expiry forward by another full lifespan.
+
+| Action | Bumps `updated`? |
+|---|---|
+| `save <path>` (create or overwrite) | Yes |
+| `save <path> --update` (frontmatter-only refresh) | Yes |
+| `touch <path>` (refresh without reading the body) | Yes |
+| `show <path>` | Yes (pass `--no-touch` to peek without leaving fingerprints) |
+| `find <keyword>` | **No** — matching is not the same as reading |
+| `list`, `move`, `rm` | No |
+
+Useful notes survive because they get read. Notes nobody touches drift toward expiry on their own — no manual triage required.
+
+### State transitions
+
+```
+[live] ──auto-prune──▶ [.trash/] ──TTL exceeded──▶ [hard delete]
+   ▲                       │
+   └────── restore ────────┘     (just `mv` the file back)
+```
+
+1. **live** (`.carnet/<category>/<slug>.md`) — the working notebook.
+2. **trash** (`.carnet/.trash/<category>/<slug>.md`) — soft-deleted carnets, kept for `AGENT_CARNET_TRASH_TTL` (default `7d`). Original sub-path is preserved, so restoring is `mv .carnet/.trash/foo/bar.md .carnet/foo/bar.md`.
+3. **hard delete** — anything in `.trash/` whose mtime is older than the trash TTL is unlinked permanently.
+
+### Auto-prune
+
+Every CLI invocation (except `--help` / `--version`) sweeps the notebook:
+
+1. Walks `.carnet/` and moves carnets where `expiry <= today` to `.trash/`.
+2. Hard-deletes anything in `.trash/` whose mtime is older than the trash TTL.
+
+Opt out per call with `--no-auto-prune`, or globally with `AGENT_CARNET_AUTO_PRUNE=false` and run `agent-carnet prune --auto` from CI instead. The latter is the recommended pattern for shared, git-tracked notebooks: each developer's local CLI should not silently delete other people's carnets.
+
+### Exemptions
+
+A carnet never expires when:
+
+- `keep: true` is set (explicit pin), or
+- `lifespan: never` is set, or
+- `updated` is missing (treated as "freshly imported, not yet measured" — the safety valve that prevents a one-shot `agent-carnet list` from sweeping unmigrated notes into `.trash/`).
 
 ## Cookbook
 
