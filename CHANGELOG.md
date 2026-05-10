@@ -4,6 +4,19 @@ All notable changes to `agent-carnet` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Per-subcommand help. `agent-carnet <command> -h` (or `--help`) now
+  prints a focused help block for that command — required arguments,
+  all options, notes, and examples — instead of falling back to the
+  global help. The global help references the new pattern, and the
+  bundled skill documents it so agents can self-discover flag sets
+  without scraping README. Auto-prune is still skipped for any help
+  invocation, so subcommand help stays a pure print with no filesystem
+  side effects.
+
 ## [0.1.2] - 2026-05-10
 
 ### Added

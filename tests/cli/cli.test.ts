@@ -92,6 +92,31 @@ describe('cli', () => {
     expect(r.stdout.join('\n')).toMatch(/\d+\.\d+\.\d+/);
   });
 
+  it('prints subcommand help with `save -h`', async () => {
+    const r = await captureRun(['save', '-h'], tmp.cwd);
+    const out = r.stdout.join('\n');
+    expect(out).toContain('agent-carnet save');
+    expect(out).toContain('--summary');
+    expect(out).toContain('--lifespan');
+    expect(out).not.toContain('agent-carnet <command>');
+    expect(r.exitCode).toBeNull();
+  });
+
+  it('prints subcommand help with `prune --help`', async () => {
+    const r = await captureRun(['prune', '--help'], tmp.cwd);
+    const out = r.stdout.join('\n');
+    expect(out).toContain('agent-carnet prune');
+    expect(out).toContain('--interactive');
+    expect(out).toContain('--include-trash');
+    expect(r.exitCode).toBeNull();
+  });
+
+  it('falls back to global help for `<unknown> -h`', async () => {
+    const r = await captureRun(['wat', '-h'], tmp.cwd);
+    expect(r.stdout.join('\n')).toContain('agent-carnet <command>');
+    expect(r.exitCode).toBeNull();
+  });
+
   it('init creates storage', async () => {
     const r = await captureRun(['init'], tmp.cwd);
     expect(r.exitCode).toBeNull();

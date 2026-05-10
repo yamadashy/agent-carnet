@@ -28,6 +28,11 @@ agent-carnet move <from> <to>
 agent-carnet rm <path> --yes
 ```
 
+When unsure of a subcommand's full flag set, run `agent-carnet <command> -h` (e.g.
+`agent-carnet save -h`, `agent-carnet prune -h`). Each subcommand prints its own
+focused help — required arguments, options, and examples — without invoking
+filesystem operations.
+
 ## When to save
 
 Save proactively when you discover something worth preserving across sessions:

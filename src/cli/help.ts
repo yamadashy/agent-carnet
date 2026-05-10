@@ -14,6 +14,8 @@ Commands:
   rm <category>/<slug>       Delete a carnet (.trash/ by default; --hard to unlink, --yes to skip prompt)
   prune                      Move expired carnets to .trash/ (--dry-run, --auto, --interactive)
 
+Run \`agent-carnet <command> -h\` for per-command help (options, examples).
+
 Global options:
       --json                 Machine-readable output
       --no-color             Disable color
@@ -42,3 +44,210 @@ Examples:
   agent-carnet rm deps/iconv-issue --yes
   agent-carnet prune --interactive
 `;
+
+const INIT_HELP = `agent-carnet init - Create ./.carnet/ in the current directory
+
+Usage:
+  agent-carnet init [options]
+
+Options:
+  --gitignore   Add an entry for .carnet/ to .gitignore (creates the file if missing)
+
+Examples:
+  agent-carnet init
+  agent-carnet init --gitignore
+`;
+
+const SAVE_HELP = `agent-carnet save - Create or update a carnet
+
+Usage:
+  agent-carnet save <category>/<slug> --summary <text> --agent <name> [options]
+
+Required:
+  <category>/<slug>      Path under .carnet/ (kebab-case, no leading slash, no '..').
+  --summary <text>       One-line summary. The first thing the next reader sees.
+  --agent <name>         Note author (claude-code, codex, cursor, human, ...).
+
+Options:
+  --tags <a,b,c>         Comma-separated tags.
+  --related <p1,p2>      Comma-separated related paths or other carnets.
+  --body <text>          Inline body. Mutually exclusive with stdin.
+  --lifespan <duration>  Override the default expiry. Examples: 30d, 90d, 1y, never.
+  --keep                 Pin against auto-prune (lifespan is ignored).
+  --update               Overwrite an existing carnet. Preserves unknown frontmatter
+                         (e.g. the meta: subtree) verbatim.
+
+Body:
+  Read from stdin if --body is not given. --body and stdin cannot be combined.
+
+Examples:
+  echo "details..." | agent-carnet save deps/iconv-issue \\
+    --summary "iconv-esm v0.7 types broken — pin to v0.6" \\
+    --agent claude-code \\
+    --tags compat,esm
+
+  agent-carnet save vocab/staging-adapter \\
+    --summary "staging adapter — the thin proxy in front of POST /v1/stage" \\
+    --agent claude-code \\
+    --tags vocab \\
+    --body "..."
+`;
+
+const LIST_HELP = `agent-carnet list - List carnets, grouped by category
+
+Usage:
+  agent-carnet list [category] [options]
+
+Arguments:
+  [category]             Restrict to a single top-level category.
+
+Options:
+  --recent <N>           Show only the N most recently updated carnets.
+  --tags <a,b,c>         Restrict to carnets that carry all of the given tags.
+  --expiring <duration>  Restrict to carnets expiring within the given window
+                         (e.g. 7d, 30d).
+  --sort <field>         updated (default) | created | name.
+
+Examples:
+  agent-carnet list
+  agent-carnet list deps
+  agent-carnet list --recent 10
+  agent-carnet list --tags vocab
+  agent-carnet list --expiring 7d --sort updated
+`;
+
+const FIND_HELP = `agent-carnet find - Search carnets (does NOT bump "updated")
+
+Usage:
+  agent-carnet find <keyword> [options]
+
+Arguments:
+  <keyword>              Substring to search for. Case-insensitive.
+
+Options:
+  --in <scope>           summary (default) | tags | body | all.
+  --category <name>      Restrict to a single category.
+  --limit <N>            Cap the number of hits returned.
+
+Note:
+  find is intentionally a peek — matching a keyword is not the same as reading
+  the carnet, so "updated" is not bumped. Use \`show\` when you actually need to
+  refresh the lifespan.
+
+Examples:
+  agent-carnet find iconv
+  agent-carnet find encoding --in body --limit 5
+  agent-carnet find vocab --in tags
+`;
+
+const SHOW_HELP = `agent-carnet show - Print a carnet (bumps "updated" to today by default)
+
+Usage:
+  agent-carnet show <category>/<slug> [options]
+
+Arguments:
+  <category>/<slug>      Path of the carnet to print.
+
+Options:
+  --no-touch             Print without bumping "updated". Use for previews.
+  --no-frontmatter       Suppress the YAML frontmatter from the output.
+
+Examples:
+  agent-carnet show deps/iconv-issue
+  agent-carnet show deps/iconv-issue --no-touch
+  agent-carnet show vocab/staging-adapter --no-frontmatter
+`;
+
+const TOUCH_HELP = `agent-carnet touch - Bump "updated" to today without reading the body
+
+Usage:
+  agent-carnet touch <category>/<slug>
+
+Arguments:
+  <category>/<slug>      Path of the carnet to refresh.
+
+Use this when you want to keep a carnet alive without paying the cost of
+reading its full body (e.g. inside a script that only needs to refresh
+the lifespan).
+
+Examples:
+  agent-carnet touch deps/iconv-issue
+`;
+
+const MOVE_HELP = `agent-carnet move - Move a carnet to a new category
+
+Usage:
+  agent-carnet move <from> <to> [options]
+
+Arguments:
+  <from>                 Source path under .carnet/.
+  <to>                   Destination path. End with '/' to keep the source
+                         filename (e.g. \`move deps/foo archive/\`).
+
+Options:
+  --update               Overwrite an existing destination.
+
+Note:
+  Frontmatter is preserved verbatim. "updated" is intentionally NOT bumped:
+  reorganization is not "use".
+
+Examples:
+  agent-carnet move deps/iconv-issue archive/
+  agent-carnet move deps/iconv-issue archive/iconv-resolved
+  agent-carnet move deps/iconv-issue archive/iconv-resolved --update
+`;
+
+const RM_HELP = `agent-carnet rm - Delete a single carnet
+
+Usage:
+  agent-carnet rm <category>/<slug> [options]
+
+Arguments:
+  <category>/<slug>      Path of the carnet to delete.
+
+Options:
+  --yes                  Skip the confirmation prompt.
+  --hard                 Unlink immediately (skip the .trash/ safety net).
+
+Default behavior:
+  Soft-delete to .trash/. The original sub-path is preserved, so restoring
+  is a single \`mv\` from .carnet/.trash/<path> back to .carnet/<path>.
+
+Examples:
+  agent-carnet rm deps/iconv-issue
+  agent-carnet rm deps/iconv-issue --yes
+  agent-carnet rm deps/iconv-issue --hard --yes
+`;
+
+const PRUNE_HELP = `agent-carnet prune - Move expired carnets to .trash/
+
+Usage:
+  agent-carnet prune [options]
+
+Options:
+  --dry-run              Report what would be moved/deleted without changing files.
+  --auto                 Non-interactive sweep. Suitable for CI.
+  --interactive          Prompt per carnet (y/N/q). Quitting early keeps the rest.
+  --include-trash        Also hard-delete .trash/ entries older than the trash TTL.
+
+Notes:
+  --interactive cannot be combined with --auto or --json.
+  Carnets with \`keep: true\` or \`lifespan: never\` are always exempt.
+
+Examples:
+  agent-carnet prune --dry-run
+  agent-carnet prune --interactive
+  agent-carnet prune --auto --include-trash
+`;
+
+export const SUBCOMMAND_HELP: Record<string, string> = {
+  init: INIT_HELP,
+  save: SAVE_HELP,
+  list: LIST_HELP,
+  find: FIND_HELP,
+  show: SHOW_HELP,
+  touch: TOUCH_HELP,
+  move: MOVE_HELP,
+  rm: RM_HELP,
+  prune: PRUNE_HELP,
+};

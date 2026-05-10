@@ -22,7 +22,7 @@ import {
   formatShowHuman,
   formatShowJson,
 } from '../output/format.js';
-import { HELP_TEXT } from './help.js';
+import { HELP_TEXT, SUBCOMMAND_HELP } from './help.js';
 import { confirm, confirm3, readStdin } from './io.js';
 import { getVersion } from './version.js';
 
@@ -68,12 +68,16 @@ async function runAutoPrune(cwd: string, flags: RunFlags): Promise<void> {
   }
 }
 
+function helpRequested(args: string[]): boolean {
+  return args.includes('-h') || args.includes('--help');
+}
+
 export async function run(argv: string[] = process.argv.slice(2)): Promise<void> {
   const { rest, flags } = parseGlobalFlags(argv);
 
   // Short-circuit help/version BEFORE auto-prune so they stay snappy and don't
   // touch the filesystem at all (per spec).
-  if (rest.length === 0 || rest.includes('--help') || rest.includes('-h')) {
+  if (rest.length === 0) {
     console.log(HELP_TEXT);
     return;
   }
@@ -81,8 +85,22 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
     console.log(getVersion());
     return;
   }
+  // Top-level `--help` / `-h` (no command precedes it).
+  if (rest[0] === '--help' || rest[0] === '-h') {
+    console.log(HELP_TEXT);
+    return;
+  }
 
   const [command, ...args] = rest;
+
+  // Per-subcommand help: `agent-carnet <cmd> -h` / `--help`. Falls back to the
+  // global help if the command isn't recognized so users still get something
+  // useful from `agent-carnet wat -h`.
+  if (helpRequested(args)) {
+    console.log(SUBCOMMAND_HELP[command] ?? HELP_TEXT);
+    return;
+  }
+
   const cwd = process.cwd();
 
   await runAutoPrune(cwd, flags);

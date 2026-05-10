@@ -85,6 +85,8 @@ npx skills add yamadashy/agent-carnet -g
 
 Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
 
+Per-subcommand help: `agent-carnet <command> -h` (e.g. `agent-carnet save -h`) prints the focused help for that command — required arguments, all options, and examples — without touching the filesystem.
+
 Skill installation lives outside the CLI — see [Install the Claude Code skill](#install-the-claude-code-skill) above for the `npx skills` flow.
 
 ## Frontmatter schema
