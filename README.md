@@ -73,18 +73,16 @@ Every carnet flows through this lifecycle. Useful notes get reset by use, idle o
 
 ```mermaid
 stateDiagram-v2
-    direction TB
+    direction LR
 
     [*] --> Live: save
-
-    Live --> Live: show (read body)<br/>bump last_used
-    Live --> Live: used (apply)<br/>bump last_used + use_count
-    Live --> Live: save --update<br/>bump updated + last_used
-
-    Live --> Trash: auto-prune<br/>expiry passed
+    Live --> Live: show / used / save --update<br/>(reset lifespan)
+    Live --> Trash: auto-prune (expired)
     Trash --> Live: restore (mv back)
-    Trash --> [*]: hard delete<br/>after 7-day grace
+    Trash --> [*]: hard delete (after 7d)
 ```
+
+(See the per-action table below for which command bumps which field — `show`, `used`, and `save --update` each trigger the self-loop above but with different effects on `updated`, `last_used`, and `use_count`.)
 
 The expiry date is computed from two frontmatter fields:
 
