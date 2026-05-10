@@ -23,13 +23,13 @@
 </p>
 -->
 
-## Why Agent Carnet
+## ✨ Why Agent Carnet
 
 **Notes are just markdown files.** Most agent-memory tools hide notes inside a vector DB or proprietary store, so you cannot `grep`, `git diff`, or hand-edit them. Agent Carnet keeps every note as a plain `.md` file under `.carnet/`. The agent writes through the CLI; you read and review the exact same files with the tools you already use. Anything that can shell out — Claude Code, Codex, Cursor, your own scripts — works against the same notebook. No SDK, no MCP, no daemon.
 
 **Stale notes disappear on their own.** A note-store that only grows is a note-store that rots. Every carnet has a 30-day lifespan that resets each time it is read or written, so useful notes survive and the rest drift to `.trash/` automatically (with a 7-day grace period before deletion). Pin anything you cannot afford to lose with `keep: true`. The notebook stays alive without manual cleanup.
 
-## Quick start
+## 🚀 Quick start
 
 ```bash
 # Initialize a notebook in the current directory
@@ -53,7 +53,7 @@ Or install once:
 npm install -g agent-carnet
 ```
 
-## Install the Claude Code skill
+## 🧩 Install the Claude Code skill
 
 Agent Carnet ships a bundled skill at `skills/agent-carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
 
@@ -67,7 +67,7 @@ npx skills add yamadashy/agent-carnet -g
 
 `npx skills` handles the install / uninstall / list lifecycle uniformly across agents, so Agent Carnet itself doesn't need to know about Claude Code's filesystem layout.
 
-## Commands
+## 📖 Commands
 
 | Command | What it does |
 |---|---|
@@ -87,7 +87,7 @@ Per-subcommand help: `agent-carnet <command> -h` (e.g. `agent-carnet save -h`) p
 
 Skill installation lives outside the CLI — see [Install the Claude Code skill](#install-the-claude-code-skill) above for the `npx skills` flow.
 
-## Frontmatter schema
+## 📋 Frontmatter schema
 
 ```yaml
 ---
@@ -114,7 +114,7 @@ Notes:
 - `lifespan` accepts duration strings (`30d`, `90d`, `1y`) and the literal `never`.
 - `meta:` is a deliberate extension point for tools and conventions that need structured data beyond what `tags:` and `related:` express. The CLI does not interpret `meta:` itself — it preserves the full subtree on every read/write so downstream consumers (an Obsidian plugin, a sibling agent, your own script) can read and act on it. Namespace keys under the convention name (`meta.vocab.*`, `meta.hypothesis.*`) so different extensions don't collide.
 
-## Storage layout
+## 🗂️ Storage layout
 
 ```
 <cwd>/.carnet/
@@ -129,7 +129,7 @@ Notes:
 
 Phase 1 stores carnets only under the current working directory. A global `~/.carnet/` and `--scope` flag may come later.
 
-## Configuration
+## ⚙️ Configuration
 
 Phase 1 has no config file. Behavior is controlled by environment variables:
 
@@ -139,7 +139,7 @@ Phase 1 has no config file. Behavior is controlled by environment variables:
 | `AGENT_CARNET_DEFAULT_LIFESPAN` | `30d` | Default per-carnet expiry. |
 | `AGENT_CARNET_TRASH_TTL` | `7d` | How long `.trash/` keeps soft-deleted carnets before hard delete. |
 
-## Lifespan
+## 🔄 Lifespan
 
 Every carnet flows through this lifecycle. Useful notes get reset by use, idle ones decay to `.trash/`, and stale ones eventually disappear:
 
@@ -239,7 +239,7 @@ A carnet never expires when:
 - `lifespan: never` is set, or
 - both `updated` and `last_used` are missing (treated as "freshly imported, not yet measured" — the safety valve that prevents a one-shot `agent-carnet list` from sweeping unmigrated notes into `.trash/`).
 
-## Cookbook
+## 🍳 Cookbook
 
 Agent Carnet is just a folder of markdown files; useful patterns emerge from how you tag and link them, not from special folders or commands. The example below stays inside the existing CLI surface — only the `tags:` field carries the convention, so the carnet remains a portable markdown file you can also open in Obsidian, VS Code, or any editor.
 
@@ -334,7 +334,7 @@ agent-carnet find <library> --in tags    # narrow to hypothesis: notes
 
 If a hypothesis is debunked, the body explains *why* and the agent (or human) moves on without burning the same evidence again. Refresh-on-use turns staleness into signal: a debunked hypothesis nobody has needed to consult in 30 days drops to `.trash/`, which is the right behavior — by then either the library has moved or the problem isn't recurring. The hypotheses that *do* keep getting cited are the load-bearing "do not touch" entries.
 
-## How it differs from built-in agent memory
+## 🆚 How it differs from built-in agent memory
 
 |   | Vendor-managed agent memory | **Agent Carnet** |
 |---|---|---|
@@ -346,7 +346,7 @@ If a hypothesis is debunked, the body explains *why* and the agent (or human) mo
 
 Agent Carnet is intentionally less ambitious than vendor memories: it does not try to summarize, embed, or reason about your notes. It is just a tidy, auto-expiring file shelf you can share between agents.
 
-## Development
+## 🛠️ Development
 
 ```bash
 npm install
@@ -366,6 +366,6 @@ src/
 └── types/                # shared types
 ```
 
-## License
+## 📜 License
 
 MIT (c) 2026 Kazuki Yamada
