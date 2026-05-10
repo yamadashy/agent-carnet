@@ -26,6 +26,15 @@ export function validateFrontmatter(fm: Partial<CarnetFrontmatter>): asserts fm 
   if (fm.keep !== undefined && typeof fm.keep !== 'boolean') {
     throw new CarnetError('validation_error', 'keep must be a boolean');
   }
+  if (fm.last_used !== undefined && typeof fm.last_used !== 'string') {
+    throw new CarnetError('validation_error', 'last_used must be a YYYY-MM-DD string');
+  }
+  if (
+    fm.use_count !== undefined &&
+    (typeof fm.use_count !== 'number' || !Number.isInteger(fm.use_count) || fm.use_count < 0)
+  ) {
+    throw new CarnetError('validation_error', 'use_count must be a non-negative integer');
+  }
 }
 
 /** Parse a `--tags a,b,c` style flag into a deduped array. */

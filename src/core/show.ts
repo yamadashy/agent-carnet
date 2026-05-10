@@ -9,8 +9,14 @@ export interface ShowOptions {
 }
 
 /**
- * Load and (by default) refresh-on-use: bumps the `updated` field on disk so
- * lifespan resets. Pass `noTouch: true` to look without leaving fingerprints.
+ * Load and (by default) refresh-on-use: bumps `last_used` on disk so lifespan
+ * resets. Reading a carnet is a weak use signal — the agent bothered to pull
+ * the body into context, but did not explicitly mark the note as applied
+ * (see `used`). Pass `noTouch: true` to look without leaving fingerprints.
+ *
+ * Note: `updated` is not touched here — it tracks content modification, not
+ * usage. `use_count` is also not incremented (only the explicit `used`
+ * command does that).
  */
 export async function show(
   cwd: string,
@@ -24,8 +30,8 @@ export async function show(
 
   if (!options.noTouch) {
     const dateStr = today(now);
-    if (carnet.frontmatter.updated !== dateStr) {
-      carnet.frontmatter.updated = dateStr;
+    if (carnet.frontmatter.last_used !== dateStr) {
+      carnet.frontmatter.last_used = dateStr;
       await writeCarnet(absPath, carnet.frontmatter, carnet.body);
     }
   }

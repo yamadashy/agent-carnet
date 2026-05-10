@@ -6,8 +6,44 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- Lifespan model split into separate **modification** and **usage**
+  signals. Previously a single `updated` field was bumped by every
+  read, write, and touch and drove auto-prune. The model now tracks
+  four CLI-managed fields independently:
+  - `created` — birth date, immutable after first save.
+  - `updated` — last content modification (`save`, `save --update`).
+    No longer bumped by reads.
+  - `last_used` — last interaction (`save`, `show`, `used`). **This
+    is now what drives expiry**: `expiry = last_used + lifespan`.
+  - `use_count` — incremented only by the new `used` command.
+    A reference importance signal that downstream tooling and
+    `agent-carnet list --sort use_count` can read.
+  Reading a carnet (`show`) still keeps it alive (weak use signal,
+  bumps `last_used`) but no longer increments `use_count`. Existing
+  carnets without `last_used` fall back to `updated` for expiry,
+  so already-saved notes keep working without migration.
+- `touch` command renamed to `used`. Same purpose (refresh without
+  reading the body) but the new name says *why* you would call it
+  and the implementation also increments `use_count` so the call
+  records as a strong importance signal. The old `touch` command is
+  removed (no alias) — nobody else is using this CLI yet.
+- `list --sort` gains `last_used` (now the default), `use_count`.
+  The default sort changed from `updated` to `last_used` so the
+  list reflects "most recently used" rather than "most recently
+  edited", which is what an agent / human typically wants when
+  scanning a notebook.
+
 ### Added
 
+- `agent-carnet used <path>` — strong use signal command. Bumps
+  `last_used` to today and increments `use_count` by one without
+  reading the body. Cheap to call inside an agent loop after a
+  carnet actually shaped the work (fix applied, hypothesis cited,
+  vocabulary entry reused).
+- `agent-carnet list --sort use_count` — sort by importance.
+  Combine with `--recent N` to surface the top-N load-bearing notes.
 - Per-subcommand help. `agent-carnet <command> -h` (or `--help`) now
   prints a focused help block for that command — required arguments,
   all options, notes, and examples — instead of falling back to the

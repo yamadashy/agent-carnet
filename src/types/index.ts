@@ -12,10 +12,18 @@ export interface CarnetFrontmatter {
   summary: string;
   /** Writer identity (`claude-code`, `codex`, `cursor`, `human`, ...). Required. */
   agent: string;
-  /** ISO date (YYYY-MM-DD). CLI-managed. */
+  /** ISO date (YYYY-MM-DD). Set once on first save, never modified afterwards. */
   created: string;
-  /** ISO date (YYYY-MM-DD). CLI-managed; bumped by `show` and `touch`. */
+  /** ISO date (YYYY-MM-DD). Bumped only when the body or frontmatter is modified
+   *  (`save`, `save --update`). Independent of usage. */
   updated: string;
+  /** ISO date (YYYY-MM-DD). Bumped on `save`, `show` (read), and `used` (apply).
+   *  This is the field that drives expiry: `expiry = last_used + lifespan`. */
+  last_used?: string;
+  /** Number of times the carnet has been explicitly marked as used via the
+   *  `used` command. A reference signal of importance — higher counts indicate
+   *  the carnet is repeatedly worth applying. Not bumped by `show` (read alone). */
+  use_count?: number;
   /** Free-form labels. */
   tags?: string[];
   /** File paths or other carnet paths this entry points at. */

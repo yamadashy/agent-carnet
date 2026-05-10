@@ -8,8 +8,8 @@ Commands:
   save <category>/<slug>     Create or update a carnet (--summary, --agent required)
   list [category]            List carnets (--recent, --tags, --expiring, --sort)
   find <keyword>             Search carnets (--in summary|tags|body|all, --category)
-  show <category>/<slug>     Print a carnet (refreshes "updated" unless --no-touch)
-  touch <category>/<slug>    Bump "updated" to today without reading the body
+  show <category>/<slug>     Print a carnet (bumps "last_used" unless --no-touch)
+  used <category>/<slug>     Mark a carnet as applied: bump "last_used" + use_count
   move <from> <to>           Move a carnet to a new category (use trailing / to keep filename)
   rm <category>/<slug>       Delete a carnet (.trash/ by default; --hard to unlink, --yes to skip prompt)
   prune                      Move expired carnets to .trash/ (--dry-run, --auto, --interactive)
@@ -39,7 +39,7 @@ Examples:
   agent-carnet list --recent 10
   agent-carnet find iconv --in all
   agent-carnet show deps/iconv-issue
-  agent-carnet touch deps/iconv-issue
+  agent-carnet used deps/iconv-issue
   agent-carnet move deps/iconv-issue archive/
   agent-carnet rm deps/iconv-issue --yes
   agent-carnet prune --interactive
@@ -102,18 +102,19 @@ Arguments:
   [category]             Restrict to a single top-level category.
 
 Options:
-  --recent <N>           Show only the N most recently updated carnets.
+  --recent <N>           Show only the N most recently used carnets.
   --tags <a,b,c>         Restrict to carnets that carry all of the given tags.
   --expiring <duration>  Restrict to carnets expiring within the given window
                          (e.g. 7d, 30d).
-  --sort <field>         updated (default) | created | name.
+  --sort <field>         last_used (default) | updated | created | name | use_count.
 
 Examples:
   agent-carnet list
   agent-carnet list deps
   agent-carnet list --recent 10
   agent-carnet list --tags vocab
-  agent-carnet list --expiring 7d --sort updated
+  agent-carnet list --expiring 7d --sort last_used
+  agent-carnet list --sort use_count          # most-applied notes first
 `;
 
 const FIND_HELP = `agent-carnet find - Search carnets (does NOT bump "updated")
@@ -140,7 +141,7 @@ Examples:
   agent-carnet find vocab --in tags
 `;
 
-const SHOW_HELP = `agent-carnet show - Print a carnet (bumps "updated" to today by default)
+const SHOW_HELP = `agent-carnet show - Print a carnet (bumps "last_used" to today by default)
 
 Usage:
   agent-carnet show <category>/<slug> [options]
@@ -149,8 +150,15 @@ Arguments:
   <category>/<slug>      Path of the carnet to print.
 
 Options:
-  --no-touch             Print without bumping "updated". Use for previews.
+  --no-touch             Print without bumping "last_used". Use for previews
+                         that should not extend the lifespan.
   --no-frontmatter       Suppress the YAML frontmatter from the output.
+
+Notes:
+  show is the *weak* use signal — pulling the body into context resets the
+  lifespan but does NOT increment "use_count". When the carnet actually
+  shapes your work, follow up with \`agent-carnet used <path>\` to record
+  the strong signal.
 
 Examples:
   agent-carnet show deps/iconv-issue
@@ -158,20 +166,28 @@ Examples:
   agent-carnet show vocab/staging-adapter --no-frontmatter
 `;
 
-const TOUCH_HELP = `agent-carnet touch - Bump "updated" to today without reading the body
+const USED_HELP = `agent-carnet used - Mark a carnet as applied (strong use signal)
 
 Usage:
-  agent-carnet touch <category>/<slug>
+  agent-carnet used <category>/<slug>
 
 Arguments:
-  <category>/<slug>      Path of the carnet to refresh.
+  <category>/<slug>      Path of the carnet to mark as used.
 
-Use this when you want to keep a carnet alive without paying the cost of
-reading its full body (e.g. inside a script that only needs to refresh
-the lifespan).
+What it does:
+  - Bumps "last_used" to today (resets the lifespan).
+  - Increments "use_count" by 1.
+  - Does NOT read the body — cheap to call inside an agent loop.
+
+When to call:
+  After you actually applied a carnet's content to the work — solving a
+  bug with the recorded fix, citing a debunked hypothesis, reusing a
+  vocabulary entry. \`show\` already keeps the carnet alive on read; \`used\`
+  records the *importance* signal that survives across many sessions.
 
 Examples:
-  agent-carnet touch deps/iconv-issue
+  agent-carnet used deps/iconv-issue
+  agent-carnet used vocab/staging-adapter
 `;
 
 const MOVE_HELP = `agent-carnet move - Move a carnet to a new category
@@ -246,7 +262,7 @@ export const SUBCOMMAND_HELP: Record<string, string> = {
   list: LIST_HELP,
   find: FIND_HELP,
   show: SHOW_HELP,
-  touch: TOUCH_HELP,
+  used: USED_HELP,
   move: MOVE_HELP,
   rm: RM_HELP,
   prune: PRUNE_HELP,

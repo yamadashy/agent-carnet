@@ -38,13 +38,17 @@ export function parseLifespan(input: string): number | 'never' {
 }
 
 /**
- * Compute the expiry date of a carnet given its `updated` date and effective
+ * Compute the expiry date of a carnet given its usage anchor and effective
  * lifespan (per-carnet override, falling back to the env-var default).
+ *
+ * The anchor is `last_used` when present (refresh-on-use is now driven by the
+ * explicit `used` command and by `show`). For carnets that pre-date the
+ * `last_used` field, fall back to `updated` so legacy notes still work.
  *
  * Returns `null` for `lifespan: never` or `keep: true`.
  */
 export function expiryDate(
-  updated: string,
+  anchor: string,
   lifespan: string | undefined,
   keep: boolean | undefined,
   defaultLifespan: string,
@@ -53,8 +57,13 @@ export function expiryDate(
   const effective = lifespan ?? defaultLifespan;
   const ms = parseLifespan(effective);
   if (ms === 'never') return null;
-  const u = parseDate(updated);
+  const u = parseDate(anchor);
   return new Date(u.getTime() + ms);
+}
+
+/** Pick the expiry-driving date: `last_used` if present, else `updated`. */
+export function lifespanAnchor(updated: string, lastUsed: string | undefined): string {
+  return lastUsed ?? updated;
 }
 
 /** Days remaining until expiry. Negative = already expired. */

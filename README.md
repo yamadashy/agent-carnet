@@ -73,10 +73,10 @@ npx skills add yamadashy/agent-carnet -g
 |---|---|
 | `init [--gitignore]` | Create `.carnet/` in the current directory. `--gitignore` adds an entry. |
 | `save <category>/<slug> --summary <s> --agent <a> [--tags] [--related] [--body or stdin] [--lifespan] [--keep] [--update]` | Create or update a carnet. |
-| `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort updated\|created\|name]` | List carnets, grouped by category. |
-| `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `updated`. |
-| `show <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. By default this bumps `updated` to today. |
-| `touch <category>/<slug>` | Bump `updated` to today **without** reading the body — keep a carnet alive cheaply. |
+| `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort last_used\|updated\|created\|name\|use_count]` | List carnets, grouped by category. |
+| `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `last_used`. |
+| `show <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. Bumps `last_used` to today (weak use signal); pass `--no-touch` to peek without leaving fingerprints. |
+| `used <category>/<slug>` | Mark a carnet as **applied** — bumps `last_used` and increments `use_count`. The strong use signal; call after the note actually shaped your work. |
 | `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
 | `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
 | `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
@@ -93,8 +93,10 @@ Skill installation lives outside the CLI — see [Install the Claude Code skill]
 ---
 summary: "iconv-esm compatibility fix"   # required (one line)
 agent: claude-code                       # required (claude-code, codex, cursor, human, ...)
-created: 2026-05-04                      # CLI-managed
-updated: 2026-05-04                      # CLI-managed (refresh-on-use)
+created: 2026-05-04                      # CLI-managed, immutable after first save
+updated: 2026-05-04                      # CLI-managed, last content modification (save / save --update)
+last_used: 2026-05-04                    # CLI-managed, last read/applied (save / show / used) — drives expiry
+use_count: 7                             # CLI-managed, count of explicit `used` calls (importance signal)
 tags: [compat, esm]                      # optional
 related:                                 # optional (paths or other carnets)
   - src/core/file/encoding.ts
@@ -107,6 +109,8 @@ meta:                                    # optional, free-form extension namespa
 ```
 
 Notes:
+- `created` is immutable after the first `save`. Every other CLI-managed date is recorded separately so you can tell "when was this note last edited" (`updated`) apart from "when was it last applied" (`last_used`) and "how often has it been applied" (`use_count`).
+- Expiry is driven by `last_used`, not `updated`. Editing the body is independent of using it. See [Lifespan](#lifespan) below.
 - `lifespan` accepts duration strings (`30d`, `90d`, `1y`) and the literal `never`.
 - `meta:` is a deliberate extension point for tools and conventions that need structured data beyond what `tags:` and `related:` express. The CLI does not interpret `meta:` itself — it preserves the full subtree on every read/write so downstream consumers (an Obsidian plugin, a sibling agent, your own script) can read and act on it. Namespace keys under the convention name (`meta.vocab.*`, `meta.hypothesis.*`) so different extensions don't collide.
 
@@ -140,28 +144,41 @@ Phase 1 has no config file. Behavior is controlled by environment variables:
 Every carnet has an expiry date. It is computed from two frontmatter fields:
 
 ```
-expiry = updated + lifespan
+expiry = last_used + lifespan
 ```
 
-- `updated` — last time the carnet was touched (YYYY-MM-DD, UTC, CLI-managed).
+- `last_used` — last time the carnet was read or applied (YYYY-MM-DD, UTC, CLI-managed). Falls back to `updated` for legacy carnets that pre-date the field.
 - `lifespan` — duration string (`30d`, `90d`, `1y`, `never`). Defaults to `AGENT_CARNET_DEFAULT_LIFESPAN` (`30d`) when omitted.
 
 When `expiry <= today`, the carnet is considered stale.
 
+### Four CLI-managed dates / counters
+
+| Field | Bumped by | Purpose |
+|---|---|---|
+| `created` | `save` (first time only) | Birth date. Immutable. |
+| `updated` | `save`, `save --update` | Last content modification. Independent of usage. |
+| `last_used` | `save`, `show`, `used` | Last interaction. **Drives expiry.** |
+| `use_count` | `used` (only) | Explicit-use counter. A reference signal of importance. |
+
 ### Refresh-on-use
 
-The only way to extend a carnet's life is to **use it**. Reading or writing it bumps `updated` to today, which pushes the expiry forward by another full lifespan.
+A carnet's life is extended whenever it is **used**. There are two strengths of "use":
 
-| Action | Bumps `updated`? |
-|---|---|
-| `save <path>` (create or overwrite) | Yes |
-| `save <path> --update` (frontmatter-only refresh) | Yes |
-| `touch <path>` (refresh without reading the body) | Yes |
-| `show <path>` | Yes (pass `--no-touch` to peek without leaving fingerprints) |
-| `find <keyword>` | **No** — matching is not the same as reading |
-| `list`, `move`, `rm` | No |
+- **Weak signal — `show`.** Reading the body resets the lifespan. The agent bothered to pull the carnet into context, which is enough to keep it alive.
+- **Strong signal — `used`.** After applying a carnet's content (fixing a bug with the recorded fix, citing a debunked hypothesis, reusing a vocabulary entry), call `agent-carnet used <path>`. This bumps `last_used` *and* increments `use_count` — the latter is a durable importance metric you can sort by (`agent-carnet list --sort use_count`) or that downstream tooling can read.
 
-Useful notes survive because they get read. Notes nobody touches drift toward expiry on their own — no manual triage required.
+| Action | `updated` | `last_used` | `use_count` |
+|---|---|---|---|
+| `save <path>` (create) | today | today | 0 |
+| `save <path> --update` | today | today | unchanged |
+| `show <path>` | — | today | — |
+| `show <path> --no-touch` | — | — | — |
+| `used <path>` | — | today | **+1** |
+| `find <keyword>` | — | — | — |
+| `list`, `move`, `rm` | — | — | — |
+
+Useful notes survive because they get read. Important notes accumulate `use_count` and rise to the top of importance-sorted views. Notes nobody touches drift toward expiry on their own — no manual triage required.
 
 ### State transitions
 
@@ -190,7 +207,7 @@ A carnet never expires when:
 
 - `keep: true` is set (explicit pin), or
 - `lifespan: never` is set, or
-- `updated` is missing (treated as "freshly imported, not yet measured" — the safety valve that prevents a one-shot `agent-carnet list` from sweeping unmigrated notes into `.trash/`).
+- both `updated` and `last_used` are missing (treated as "freshly imported, not yet measured" — the safety valve that prevents a one-shot `agent-carnet list` from sweeping unmigrated notes into `.trash/`).
 
 ## Cookbook
 

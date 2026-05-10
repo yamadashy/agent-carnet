@@ -33,8 +33,8 @@ describe('round-trip', () => {
     expect(hits.length).toBe(1);
     const c = await show(tmp.cwd, 'deps/iconv', {}, new Date(Date.UTC(2026, 4, 4)));
     expect(c.body).toContain('body text');
-    expect(c.frontmatter.updated).toBe('2026-05-04');
-    // After show bumps updated to 2026-05-04, pruning at the same date should
+    expect(c.frontmatter.last_used).toBe('2026-05-04');
+    // After show bumps last_used to 2026-05-04, pruning at the same date should
     // NOT expire it (lifespan default 30d, so safe until ~2026-06-03).
     let r = await prune(tmp.cwd, config, {}, new Date(Date.UTC(2026, 4, 4)));
     expect(r.movedToTrash).toEqual([]);

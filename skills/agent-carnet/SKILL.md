@@ -5,7 +5,7 @@ description: "Use this skill when the user asks to save, recall, find, or organi
 
 # Agent Carnet
 
-A tiny CLI that gives you a shared markdown notebook on disk under `.carnet/<category>/<slug>.md`. Notes have a 30-day default lifespan that resets every time they are read; useful ones survive, stale ones drift to `.trash/` automatically.
+A tiny CLI that gives you a shared markdown notebook on disk under `.carnet/<category>/<slug>.md`. Notes have a 30-day default lifespan that resets every time they are read or applied; useful ones survive, stale ones drift to `.trash/` automatically.
 
 ## Quick reference
 
@@ -18,18 +18,20 @@ echo "body content" | agent-carnet save deps/iconv-issue \
 
 # Recall
 agent-carnet find iconv               # search summaries (does NOT bump lifespan)
-agent-carnet list                     # category-grouped overview
-agent-carnet list --recent 10         # most recently updated
-agent-carnet show deps/iconv-issue    # read full content (bumps lifespan to today)
+agent-carnet list                     # category-grouped overview, sorted by last_used
+agent-carnet list --sort use_count    # most-applied notes first
+agent-carnet show deps/iconv-issue    # read full content (bumps last_used; weak use signal)
+
+# Mark as actually applied (strong use signal — bumps last_used + use_count)
+agent-carnet used deps/iconv-issue
 
 # Maintain
-agent-carnet touch <path>             # bump lifespan without reading
 agent-carnet move <from> <to>
 agent-carnet rm <path> --yes
 ```
 
 When unsure of a subcommand's full flag set, run `agent-carnet <command> -h` (e.g.
-`agent-carnet save -h`, `agent-carnet prune -h`). Each subcommand prints its own
+`agent-carnet save -h`, `agent-carnet used -h`). Each subcommand prints its own
 focused help — required arguments, options, and examples — without invoking
 filesystem operations.
 
@@ -47,13 +49,25 @@ Save proactively when you discover something worth preserving across sessions:
 Before starting related work or when context might exist:
 - `agent-carnet find <topic>` — quick scan of summaries
 - `agent-carnet list <category>` — browse a folder
-- `agent-carnet show <path>` — actually read (this resets the lifespan; only use when the content matters)
+- `agent-carnet show <path>` — actually read (resets `last_used`; only use when the content matters)
+
+## When to call `used`
+
+Call `agent-carnet used <path>` after a carnet **actually shaped your work**:
+- You applied the recorded fix and it solved the bug.
+- You consulted the carnet before retrying a hypothesis and skipped a dead-end.
+- You used the canonical name from a `vocab` carnet in new code instead of inventing your own.
+
+`used` increments `use_count` — a durable importance signal that survives across sessions and lets future readers (and `agent-carnet list --sort use_count`) surface load-bearing notes.
+
+Reading a carnet does NOT count. `show` already keeps it alive (weak signal); `used` records that the note was worth keeping for a real reason (strong signal).
 
 ## Hard rules
 
 - `--summary` is required. Make it decisive — reading the summary in isolation tells the next reader (or the next agent) whether to read further.
 - `--agent claude-code` is required.
-- `find` does NOT bump lifespan. `show` does. Bumping requires actually reading the body.
+- `find` does NOT bump anything. `show` bumps `last_used`. `used` bumps `last_used` AND increments `use_count`.
+- `updated` tracks content modification only (`save`, `save --update`). It is independent of `last_used` and is not the lifespan driver.
 - The 30-day expiry is automatic — do not manually clean up. `keep: true` pins permanent notes.
 - Auto-prune runs on every CLI invocation; deleted carnets land in `.carnet/.trash/` for 7 days before hard delete.
 

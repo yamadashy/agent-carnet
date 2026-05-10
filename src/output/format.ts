@@ -28,8 +28,10 @@ export function formatListHuman(entries: ListEntry[], useColor: boolean): string
     for (const item of items) {
       const slug = slugOf(item.carnet.relPath).padEnd(widest);
       const summary = item.carnet.frontmatter.summary ?? '';
-      const updated = item.carnet.frontmatter.updated ?? '';
-      const tail = useColor ? pc.dim(`(updated: ${updated})`) : `(updated: ${updated})`;
+      const lastUsed = item.carnet.frontmatter.last_used ?? item.carnet.frontmatter.updated ?? '';
+      const useCount = typeof item.carnet.frontmatter.use_count === 'number' ? item.carnet.frontmatter.use_count : 0;
+      const tailText = `(last_used: ${lastUsed}, used: ${useCount})`;
+      const tail = useColor ? pc.dim(tailText) : tailText;
       out.push(`  ${slug}  ${summary}  ${tail}`);
     }
   }
@@ -91,6 +93,8 @@ export function formatShowHuman(carnet: Carnet, withFrontmatter: boolean): strin
     `created: ${fm.created ?? ''}`,
     `updated: ${fm.updated ?? ''}`,
   ];
+  if (fm.last_used) lines.push(`last_used: ${fm.last_used}`);
+  if (typeof fm.use_count === 'number') lines.push(`use_count: ${fm.use_count}`);
   if (fm.tags && fm.tags.length > 0) lines.push(`tags: ${fm.tags.join(', ')}`);
   if (fm.related && fm.related.length > 0) lines.push(`related: ${fm.related.join(', ')}`);
   if (fm.lifespan) lines.push(`lifespan: ${fm.lifespan}`);

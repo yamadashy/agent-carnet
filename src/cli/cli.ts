@@ -9,7 +9,7 @@ import { type PruneCandidate, type PruneDecision, prune } from '../core/prune.js
 import { remove } from '../core/rm.js';
 import { save } from '../core/save.js';
 import { show } from '../core/show.js';
-import { touch } from '../core/touch.js';
+import { used } from '../core/used.js';
 import { parseCsv } from '../core/validate.js';
 import { exitCodeFor, formatErrorHuman, formatErrorJson, toErrorShape } from '../output/error.js';
 import {
@@ -122,8 +122,8 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
       case 'show':
         await cmdShow(cwd, args, flags);
         return;
-      case 'touch':
-        await cmdTouch(cwd, args, flags);
+      case 'used':
+        await cmdUsed(cwd, args, flags);
         return;
       case 'move':
         await cmdMove(cwd, args, flags);
@@ -345,15 +345,21 @@ async function cmdPrune(cwd: string, args: string[], flags: RunFlags): Promise<v
   }
 }
 
-async function cmdTouch(cwd: string, args: string[], flags: RunFlags): Promise<void> {
+async function cmdUsed(cwd: string, args: string[], flags: RunFlags): Promise<void> {
   const parsed = parseArgs({ args, allowPositionals: true, options: {} });
   const path = parsed.positionals[0];
-  if (!path) throw new CarnetError('validation_error', 'touch <path> is required');
-  const result = await touch(cwd, path);
+  if (!path) throw new CarnetError('validation_error', 'used <path> is required');
+  const result = await used(cwd, path);
   if (flags.json) {
-    console.log(JSON.stringify({ ok: true, path: result.relPath, updated: result.updated }, null, 2));
+    console.log(
+      JSON.stringify(
+        { ok: true, path: result.relPath, last_used: result.lastUsed, use_count: result.useCount },
+        null,
+        2,
+      ),
+    );
   } else {
-    console.log(`touched: ${result.relPath}  (updated: ${result.updated})`);
+    console.log(`used: ${result.relPath}  (last_used: ${result.lastUsed}, use_count: ${result.useCount})`);
   }
 }
 

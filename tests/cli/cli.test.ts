@@ -237,7 +237,9 @@ describe('cli', () => {
     const file = join(tmp.cwd, '.carnet/deps/old.md');
     const fs = await import('node:fs/promises');
     let content = await fs.readFile(file, 'utf-8');
-    content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
+    // Backdate last_used (the lifespan driver). updated is independent now —
+    // it tracks content modification, not usage.
+    content = content.replace(/last_used: [^\n]+/, 'last_used: 2020-01-01');
     await fs.writeFile(file, content, 'utf-8');
     await captureRun(['list'], tmp.cwd);
     const fs2 = await import('node:fs');
@@ -245,43 +247,49 @@ describe('cli', () => {
     expect(fs2.existsSync(join(tmp.cwd, '.carnet/.trash/deps/old.md'))).toBe(true);
   });
 
-  it('touch bumps updated and emits the updated date', async () => {
+  it('used bumps last_used + use_count and emits both', async () => {
     await captureRun(['init'], tmp.cwd);
     await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a', '--body', 'body'], tmp.cwd);
-    // Backdate so we can prove the bump happened.
+    // Backdate `last_used` so we can prove the bump happened. We backdate
+    // last_used (not updated) because last_used now drives expiry.
     const file = join(tmp.cwd, '.carnet/deps/x.md');
     const fs = await import('node:fs/promises');
     let content = await fs.readFile(file, 'utf-8');
-    content = content.replace(/updated: [^\n]+/, 'updated: 2020-01-01');
+    content = content.replace(/last_used: [^\n]+/, 'last_used: 2020-01-01');
     await fs.writeFile(file, content, 'utf-8');
 
     // Disable auto-prune — the backdate above would otherwise sweep the file
-    // before touch ever runs.
-    const r = await captureRun(['touch', 'deps/x', '--no-auto-prune'], tmp.cwd);
+    // before used ever runs.
+    const r = await captureRun(['used', 'deps/x', '--no-auto-prune'], tmp.cwd);
     expect(r.exitCode).toBeNull();
-    expect(r.stdout.join('\n')).toMatch(/touched: deps\/x.md/);
+    const out = r.stdout.join('\n');
+    expect(out).toMatch(/used: deps\/x.md/);
+    expect(out).toMatch(/last_used: \d{4}-\d{2}-\d{2}/);
+    expect(out).toMatch(/use_count: 1/);
 
     const after = await fs.readFile(file, 'utf-8');
-    expect(after).not.toMatch(/updated: 2020-01-01/);
+    expect(after).not.toMatch(/last_used: 2020-01-01/);
+    expect(after).toMatch(/use_count: 1/);
     // Body must be preserved.
     expect(after).toContain('body');
   });
 
-  it('touch on missing carnet exits 3', async () => {
+  it('used on missing carnet exits 3', async () => {
     await captureRun(['init'], tmp.cwd);
-    const r = await captureRun(['touch', 'deps/missing'], tmp.cwd);
+    const r = await captureRun(['used', 'deps/missing'], tmp.cwd);
     expect(r.exitCode).toBe(3);
     expect(r.stderr.join('\n')).toContain('not_found');
   });
 
-  it('touch JSON output shape', async () => {
+  it('used JSON output shape', async () => {
     await captureRun(['init'], tmp.cwd);
     await captureRun(['save', 'deps/x', '--summary', 's', '--agent', 'a'], tmp.cwd);
-    const r = await captureRun(['--json', 'touch', 'deps/x'], tmp.cwd);
+    const r = await captureRun(['--json', 'used', 'deps/x'], tmp.cwd);
     const obj = JSON.parse(r.stdout.join('\n'));
     expect(obj.ok).toBe(true);
     expect(obj.path).toBe('deps/x.md');
-    expect(typeof obj.updated).toBe('string');
+    expect(typeof obj.last_used).toBe('string');
+    expect(obj.use_count).toBe(1);
   });
 
   it('move relocates a carnet (full destination)', async () => {

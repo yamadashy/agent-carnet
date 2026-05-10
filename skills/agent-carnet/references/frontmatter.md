@@ -8,11 +8,13 @@ Read this file when you are about to write or read the `meta:` namespace, set a 
 
 ```yaml
 ---
-# CLI-managed (you provide these on save; updated via touch / show)
+# CLI-managed (you provide these on save; usage fields update via show / used)
 summary: "one-line decisive description"   # required
 agent: claude-code                         # required (e.g. claude-code, codex, cursor, human)
-created: 2026-05-10                        # set automatically on first save
-updated: 2026-05-10                        # bumped by show / touch (refresh-on-use)
+created: 2026-05-10                        # set on first save, immutable thereafter
+updated: 2026-05-10                        # bumped on save / save --update (content modification)
+last_used: 2026-05-10                      # bumped on save / show / used (drives expiry)
+use_count: 7                               # incremented on `used` only (importance signal)
 
 # Optional, CLI-known
 tags: [compat, esm]                        # free-form labels; comma-separated on save
@@ -29,9 +31,22 @@ meta:                                      # free-form extension namespace; see 
 ---
 ```
 
+## The four CLI-managed dates / counters
+
+`agent-carnet` deliberately separates *modification* from *usage* so each can be observed and sorted independently:
+
+| Field | Bumped by | Means |
+|---|---|---|
+| `created` | `save` (first time only) | Birth date. Never changes. |
+| `updated` | `save`, `save --update` | Last content modification. |
+| `last_used` | `save`, `show`, `used` | Last interaction. Drives expiry: `expiry = last_used + lifespan`. |
+| `use_count` | `used` (only) | How many times the carnet was explicitly applied. A reference signal of importance. |
+
+`show` is a *weak* use signal — pulling the body into context counts as use enough to keep the lifespan alive but not enough to bump `use_count`. `used` is the *strong* signal — call it after the carnet actually shaped your work.
+
 ## CLI-managed vs preserved fields
 
-The CLI rewrites only the fields it knows about: `summary`, `agent`, `created`, `updated`, `tags`, `related`, `lifespan`, `keep`. On `save --update`, every other top-level frontmatter key is round-tripped untouched — including `meta:` and any custom keys an external tool may have added.
+The CLI rewrites only the fields it knows about: `summary`, `agent`, `created`, `updated`, `last_used`, `use_count`, `tags`, `related`, `lifespan`, `keep`. On `save --update`, every other top-level frontmatter key is round-tripped untouched — including `meta:` and any custom keys an external tool may have added.
 
 This is the foundation of the extension model: as long as you stay outside the CLI-managed names, your fields survive every CLI write.
 

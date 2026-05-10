@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import type { Carnet, PruneReport } from '../types/index.js';
 import type { RuntimeConfig } from './config.js';
-import { daysUntil, expiryDate, parseLifespan } from './dates.js';
+import { daysUntil, expiryDate, lifespanAnchor, parseLifespan } from './dates.js';
 import { trashRoot } from './paths.js';
 import { fileMtime, hardDelete, loadAllCarnets, moveToTrash, walkMarkdown } from './storage.js';
 
@@ -42,10 +42,10 @@ export async function prune(
   for (const c of carnets) {
     const fm = c.frontmatter;
     if (fm.keep) continue;
-    if (!fm.updated) continue;
+    if (!fm.updated && !fm.last_used) continue;
     let exp: Date | null;
     try {
-      exp = expiryDate(fm.updated, fm.lifespan, fm.keep, config.defaultLifespan);
+      exp = expiryDate(lifespanAnchor(fm.updated, fm.last_used), fm.lifespan, fm.keep, config.defaultLifespan);
     } catch {
       // Invalid lifespan in a carnet shouldn't crash auto-prune. Skip silently.
       continue;

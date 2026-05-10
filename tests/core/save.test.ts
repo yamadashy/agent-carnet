@@ -72,6 +72,44 @@ describe('save', () => {
     expect(r2.carnet.frontmatter.updated).toBe('2026-05-04');
   });
 
+  it('initializes last_used to today and use_count to 0 on first save', async () => {
+    const r = await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/iconv', summary: 's', agent: 'a', body: '' },
+      new Date(Date.UTC(2026, 4, 4)),
+    );
+    expect(r.carnet.frontmatter.last_used).toBe('2026-05-04');
+    expect(r.carnet.frontmatter.use_count).toBe(0);
+  });
+
+  it('preserves use_count across --update (saving is not "use")', async () => {
+    await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/iconv', summary: 's', agent: 'a', body: '' },
+      new Date(Date.UTC(2026, 4, 4)),
+    );
+    // Bump the count manually to mimic prior `used` calls.
+    const fs = await import('node:fs/promises');
+    const file = `${tmp.cwd}/.carnet/deps/iconv.md`;
+    let content = await fs.readFile(file, 'utf-8');
+    content = content.replace(/use_count: 0/, 'use_count: 7');
+    await fs.writeFile(file, content, 'utf-8');
+
+    const r2 = await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/iconv', summary: 's2', agent: 'a', body: 'second', update: true },
+      new Date(Date.UTC(2026, 5, 1)),
+    );
+    expect(r2.carnet.frontmatter.use_count).toBe(7);
+    // last_used is bumped because save IS interaction with the note.
+    expect(r2.carnet.frontmatter.last_used).toBe('2026-06-01');
+    // updated tracks the content change.
+    expect(r2.carnet.frontmatter.updated).toBe('2026-06-01');
+  });
+
   it('honors keep flag', async () => {
     const r = await save(tmp.cwd, config, {
       path: 'deps/iconv',
