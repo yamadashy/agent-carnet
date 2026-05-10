@@ -1,8 +1,8 @@
 <div align="center">
   <!-- TODO: drop ./docs/logo.svg in once the leather-notebook icon is ready, then uncomment.
-  <img src="./docs/logo.svg" alt="agent-carnet" width="180" height="auto" />
+  <img src="./docs/logo.svg" alt="Agent Carnet" width="180" height="auto" />
   -->
-  <h1>agent-carnet 📓</h1>
+  <h1>Agent Carnet 📓</h1>
   <p align="center">
     <span><i>un petit carnet</i> for AI agents — and the humans who work with them</span>
   </p>
@@ -17,7 +17,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
-`agent-carnet` (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI that gives AI coding agents — Claude Code, Codex, Cursor — a shared notebook on disk. Each note is a markdown file under `.carnet/<category>/<slug>.md`.
+**Agent Carnet** (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI — `agent-carnet` — that gives AI coding agents (Claude Code, Codex, Cursor) a shared notebook on disk. Each note is a markdown file under `.carnet/<category>/<slug>.md`.
 
 <!-- TODO: capture ./docs/screenshots/terminal.png (a side-by-side of `agent-carnet list` and `agent-carnet show`) and uncomment.
 <p align="center">
@@ -25,9 +25,9 @@
 </p>
 -->
 
-## Why agent-carnet
+## Why Agent Carnet
 
-**Notes are just markdown files.** Most agent-memory tools hide notes inside a vector DB or proprietary store, so you cannot `grep`, `git diff`, or hand-edit them. agent-carnet keeps every note as a plain `.md` file under `.carnet/`. The agent writes through the CLI; you read and review the exact same files with the tools you already use. Anything that can shell out — Claude Code, Codex, Cursor, your own scripts — works against the same notebook. No SDK, no MCP, no daemon.
+**Notes are just markdown files.** Most agent-memory tools hide notes inside a vector DB or proprietary store, so you cannot `grep`, `git diff`, or hand-edit them. Agent Carnet keeps every note as a plain `.md` file under `.carnet/`. The agent writes through the CLI; you read and review the exact same files with the tools you already use. Anything that can shell out — Claude Code, Codex, Cursor, your own scripts — works against the same notebook. No SDK, no MCP, no daemon.
 
 **Stale notes disappear on their own.** A note-store that only grows is a note-store that rots. Every carnet has a 30-day lifespan that resets each time it is read or written, so useful notes survive and the rest drift to `.trash/` automatically (with a 7-day grace period before deletion). Pin anything you cannot afford to lose with `keep: true`. The notebook stays alive without manual cleanup.
 
@@ -57,7 +57,7 @@ npm install -g agent-carnet
 
 ## Install the Claude Code skill
 
-agent-carnet ships a bundled skill at `skills/agent-carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
+Agent Carnet ships a bundled skill at `skills/agent-carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
 
 ```bash
 # Project install (default) — drops the skill into <cwd>/.claude/skills/agent-carnet/
@@ -67,7 +67,7 @@ npx skills add yamadashy/agent-carnet
 npx skills add yamadashy/agent-carnet -g
 ```
 
-`npx skills` handles the install / uninstall / list lifecycle uniformly across agents, so agent-carnet itself doesn't need to know about Claude Code's filesystem layout.
+`npx skills` handles the install / uninstall / list lifecycle uniformly across agents, so Agent Carnet itself doesn't need to know about Claude Code's filesystem layout.
 
 ## Commands
 
@@ -194,7 +194,7 @@ A carnet never expires when:
 
 ## Cookbook
 
-agent-carnet is just a folder of markdown files; useful patterns emerge from how you tag and link them, not from special folders or commands. The example below stays inside the existing CLI surface — only the `tags:` field carries the convention, so the carnet remains a portable markdown file you can also open in Obsidian, VS Code, or any editor.
+Agent Carnet is just a folder of markdown files; useful patterns emerge from how you tag and link them, not from special folders or commands. The example below stays inside the existing CLI surface — only the `tags:` field carries the convention, so the carnet remains a portable markdown file you can also open in Obsidian, VS Code, or any editor.
 
 ### Vocabulary alignment
 
@@ -245,7 +245,7 @@ echo "..." | agent-carnet save vocab/staging-adapter \
   --tags vocab
 ```
 
-Refresh-on-use does the rest: synonyms that keep getting cited stay alive, ones that nobody invokes drift to `.trash/` automatically. The `vocab` tag is purely a project-level convention — the file is just markdown, and agent-carnet itself does not know or care that it represents a term.
+Refresh-on-use does the rest: synonyms that keep getting cited stay alive, ones that nobody invokes drift to `.trash/` automatically. The `vocab` tag is purely a project-level convention — the file is just markdown, and Agent Carnet itself does not know or care that it represents a term.
 
 ### Hypothesis ledger
 
@@ -289,7 +289,7 @@ If a hypothesis is debunked, the body explains *why* and the agent (or human) mo
 
 ## How it differs from built-in agent memory
 
-|   | Vendor-managed agent memory | **agent-carnet** |
+|   | Vendor-managed agent memory | **Agent Carnet** |
 |---|---|---|
 | Agents that can use it | One vendor's tool only | Any (the interface is `bash`) |
 | Storage | Opaque, server- or vendor-managed | Plain markdown files on your disk |
@@ -297,7 +297,7 @@ If a hypothesis is debunked, the body explains *why* and the agent (or human) mo
 | Lifespan enforcement | LLM-judged or none | CLI-enforced (auto-prune to `.trash/`) |
 | Frontmatter validation | n/a | CLI-enforced (`summary`/`agent` required) |
 
-`agent-carnet` is intentionally less ambitious than vendor memories: it does not try to summarize, embed, or reason about your notes. It is just a tidy, auto-expiring file shelf you can share between agents.
+Agent Carnet is intentionally less ambitious than vendor memories: it does not try to summarize, embed, or reason about your notes. It is just a tidy, auto-expiring file shelf you can share between agents.
 
 ## Development
 
