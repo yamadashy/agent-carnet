@@ -76,13 +76,13 @@ stateDiagram-v2
     direction LR
 
     [*] --> Live: save
-    Live --> Live: use
-    Live --> Trash: expired
+    Live --> Live: show / used / save --update<br/>(resets lifespan)
+    Live --> Trash: expired (30d idle)
     Trash --> Live: restore
     Trash --> [*]: delete (7d)
 ```
 
-The self-loop labelled **use** stands in for `show`, `used`, or `save --update` — any one of them resets the lifespan. **expired** means `last_used + lifespan < today`. **delete (7d)** is the hard delete that runs after the trash TTL. The table further down spells out which fields each specific command bumps.
+**expired (30d idle)** means `last_used + lifespan < today` — auto-prune sweeps the carnet to `.trash/` once nothing has touched it for the lifespan window (default 30 days). **delete (7d)** is the hard delete that runs after the trash TTL. The table further down spells out which fields each command on the self-loop actually bumps (`show` / `used` / `save --update` differ on which of `updated`, `last_used`, `use_count` they touch).
 
 The expiry date is computed from two frontmatter fields:
 
