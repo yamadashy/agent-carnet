@@ -4,7 +4,7 @@ All notable changes to `agent-carnet` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.3] - 2026-05-10
 
 ### Changed (breaking)
 
@@ -52,6 +52,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   without scraping README. Auto-prune is still skipped for any help
   invocation, so subcommand help stays a pure print with no filesystem
   side effects.
+
+### Documentation
+
+- Adopt the butler-hat leather notebook icon as the project mark
+  (`docs/logo.svg`, surfaced in the README header and shipped in the
+  npm tarball so it renders on npmjs.com too).
+- README rewritten: brand name "Agent Carnet" used in prose
+  (lowercase `agent-carnet` reserved for the package / command),
+  intro slimmed to a single sentence, "Why" section rewritten in
+  contrast form (vs vector-DB-backed agent memory and vs ever-
+  growing note stores), repomix-style emoji prefixes on top-level
+  sections, and the four reference sections (commands, frontmatter
+  schema, storage layout, configuration) consolidated under one
+  `## 📖 Reference` heading so the conceptual material (Lifespan,
+  Cookbook) gets visual priority.
+- Lifespan section gains two mermaid diagrams: a state diagram of
+  the carnet lifecycle (Live ⇌ Trash, with a self-loop labelled
+  with the use commands and the expiry trigger) and a flowchart
+  comparing the weak vs strong use signals. Diagrams are tuned to
+  fit alongside GitHub's in-page mermaid pan / zoom / copy controls
+  without clipping.
 
 ## [0.1.2] - 2026-05-10
 

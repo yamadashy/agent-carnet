@@ -1,6 +1,6 @@
 {
   "name": "agent-carnet",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "File-based markdown notebook CLI for AI agents — the leather notebook in your jacket pocket.",
   "type": "module",
   "main": "./dist/index.mjs",
