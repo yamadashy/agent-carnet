@@ -53,7 +53,7 @@ Or install once:
 npm install -g agent-carnet
 ```
 
-## 🧩 Install the Claude Code skill
+### Install the Claude Code skill
 
 Agent Carnet ships a bundled skill at `skills/agent-carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
 
