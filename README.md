@@ -76,13 +76,13 @@ stateDiagram-v2
     direction LR
 
     [*] --> Live: save
-    Live --> Live: show / used / save --update<br/>(reset lifespan)
-    Live --> Trash: auto-prune (expired)
-    Trash --> Live: restore (mv back)
-    Trash --> [*]: hard delete (after 7d)
+    Live --> Live: use
+    Live --> Trash: expired
+    Trash --> Live: restore
+    Trash --> [*]: delete (7d)
 ```
 
-(See the per-action table below for which command bumps which field — `show`, `used`, and `save --update` each trigger the self-loop above but with different effects on `updated`, `last_used`, and `use_count`.)
+The self-loop labelled **use** stands in for `show`, `used`, or `save --update` — any one of them resets the lifespan. **expired** means `last_used + lifespan < today`. **delete (7d)** is the hard delete that runs after the trash TTL. The table further down spells out which fields each specific command bumps.
 
 The expiry date is computed from two frontmatter fields:
 
