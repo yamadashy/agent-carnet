@@ -23,7 +23,7 @@
 </p>
 -->
 
-## ✨ Why Agent Carnet
+## 💡 Why Agent Carnet
 
 **Notes are just markdown files.** Most agent-memory tools hide notes inside a vector DB or proprietary store, so you cannot `grep`, `git diff`, or hand-edit them. Agent Carnet keeps every note as a plain `.md` file under `.carnet/`. The agent writes through the CLI; you read and review the exact same files with the tools you already use. Anything that can shell out — Claude Code, Codex, Cursor, your own scripts — works against the same notebook. No SDK, no MCP, no daemon.
 
