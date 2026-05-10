@@ -67,78 +67,6 @@ npx skills add yamadashy/agent-carnet -g
 
 `npx skills` handles the install / uninstall / list lifecycle uniformly across agents, so Agent Carnet itself doesn't need to know about Claude Code's filesystem layout.
 
-## 📖 Commands
-
-| Command | What it does |
-|---|---|
-| `init [--gitignore]` | Create `.carnet/` in the current directory. `--gitignore` adds an entry. |
-| `save <category>/<slug> --summary <s> --agent <a> [--tags] [--related] [--body or stdin] [--lifespan] [--keep] [--update]` | Create or update a carnet. |
-| `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort last_used\|updated\|created\|name\|use_count]` | List carnets, grouped by category. |
-| `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `last_used`. |
-| `show <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. Bumps `last_used` to today (weak use signal); pass `--no-touch` to peek without leaving fingerprints. |
-| `used <category>/<slug>` | Mark a carnet as **applied** — bumps `last_used` and increments `use_count`. The strong use signal; call after the note actually shaped your work. |
-| `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
-| `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
-| `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
-
-Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
-
-Per-subcommand help: `agent-carnet <command> -h` (e.g. `agent-carnet save -h`) prints the focused help for that command — required arguments, all options, and examples — without touching the filesystem.
-
-Skill installation lives outside the CLI — see [Install the Claude Code skill](#install-the-claude-code-skill) above for the `npx skills` flow.
-
-## 📋 Frontmatter schema
-
-```yaml
----
-summary: "iconv-esm compatibility fix"   # required (one line)
-agent: claude-code                       # required (claude-code, codex, cursor, human, ...)
-created: 2026-05-04                      # CLI-managed, immutable after first save
-updated: 2026-05-04                      # CLI-managed, last content modification (save / save --update)
-last_used: 2026-05-04                    # CLI-managed, last read/applied (save / show / used) — drives expiry
-use_count: 7                             # CLI-managed, count of explicit `used` calls (importance signal)
-tags: [compat, esm]                      # optional
-related:                                 # optional (paths or other carnets)
-  - src/core/file/encoding.ts
-lifespan: 90d                            # optional (override default 30d)
-keep: true                               # optional (pin against auto-prune)
-meta:                                    # optional, free-form extension namespace
-  <extension>:
-    <key>: <value>
----
-```
-
-Notes:
-- `created` is immutable after the first `save`. Every other CLI-managed date is recorded separately so you can tell "when was this note last edited" (`updated`) apart from "when was it last applied" (`last_used`) and "how often has it been applied" (`use_count`).
-- Expiry is driven by `last_used`, not `updated`. Editing the body is independent of using it. See [Lifespan](#lifespan) below.
-- `lifespan` accepts duration strings (`30d`, `90d`, `1y`) and the literal `never`.
-- `meta:` is a deliberate extension point for tools and conventions that need structured data beyond what `tags:` and `related:` express. The CLI does not interpret `meta:` itself — it preserves the full subtree on every read/write so downstream consumers (an Obsidian plugin, a sibling agent, your own script) can read and act on it. Namespace keys under the convention name (`meta.vocab.*`, `meta.hypothesis.*`) so different extensions don't collide.
-
-## 🗂️ Storage layout
-
-```
-<cwd>/.carnet/
-├── <category>/
-│   └── <slug>.md
-├── <category>/<sub>/
-│   └── <slug>.md
-└── .trash/                  # safety net for auto-pruned carnets
-    └── <category>/
-        └── <slug>.md
-```
-
-Phase 1 stores carnets only under the current working directory. A global `~/.carnet/` and `--scope` flag may come later.
-
-## ⚙️ Configuration
-
-Phase 1 has no config file. Behavior is controlled by environment variables:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `AGENT_CARNET_AUTO_PRUNE` | `true` | Run lifespan/trash sweep on every CLI invocation. |
-| `AGENT_CARNET_DEFAULT_LIFESPAN` | `30d` | Default per-carnet expiry. |
-| `AGENT_CARNET_TRASH_TTL` | `7d` | How long `.trash/` keeps soft-deleted carnets before hard delete. |
-
 ## 🔄 Lifespan
 
 Every carnet flows through this lifecycle. Useful notes get reset by use, idle ones decay to `.trash/`, and stale ones eventually disappear:
@@ -333,6 +261,82 @@ agent-carnet find <library> --in tags    # narrow to hypothesis: notes
 ```
 
 If a hypothesis is debunked, the body explains *why* and the agent (or human) moves on without burning the same evidence again. Refresh-on-use turns staleness into signal: a debunked hypothesis nobody has needed to consult in 30 days drops to `.trash/`, which is the right behavior — by then either the library has moved or the problem isn't recurring. The hypotheses that *do* keep getting cited are the load-bearing "do not touch" entries.
+
+## 📖 Reference
+
+Lookup material — every command and flag, the on-disk file format, the directory layout, and the runtime knobs.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `init [--gitignore]` | Create `.carnet/` in the current directory. `--gitignore` adds an entry. |
+| `save <category>/<slug> --summary <s> --agent <a> [--tags] [--related] [--body or stdin] [--lifespan] [--keep] [--update]` | Create or update a carnet. |
+| `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort last_used\|updated\|created\|name\|use_count]` | List carnets, grouped by category. |
+| `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `last_used`. |
+| `show <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. Bumps `last_used` to today (weak use signal); pass `--no-touch` to peek without leaving fingerprints. |
+| `used <category>/<slug>` | Mark a carnet as **applied** — bumps `last_used` and increments `use_count`. The strong use signal; call after the note actually shaped your work. |
+| `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
+| `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
+| `prune [--dry-run] [--auto] [--interactive] [--include-trash]` | Move expired carnets to `.trash/`. `--interactive` prompts per carnet (`y`/`N`/`q`). |
+
+Global flags: `--json`, `--no-color`, `--no-auto-prune`, `--quiet`, `--help`, `--version`.
+
+Per-subcommand help: `agent-carnet <command> -h` (e.g. `agent-carnet save -h`) prints the focused help for that command — required arguments, all options, and examples — without touching the filesystem.
+
+Skill installation lives outside the CLI — see [Install the Claude Code skill](#install-the-claude-code-skill) above for the `npx skills` flow.
+
+### Frontmatter schema
+
+```yaml
+---
+summary: "iconv-esm compatibility fix"   # required (one line)
+agent: claude-code                       # required (claude-code, codex, cursor, human, ...)
+created: 2026-05-04                      # CLI-managed, immutable after first save
+updated: 2026-05-04                      # CLI-managed, last content modification (save / save --update)
+last_used: 2026-05-04                    # CLI-managed, last read/applied (save / show / used) — drives expiry
+use_count: 7                             # CLI-managed, count of explicit `used` calls (importance signal)
+tags: [compat, esm]                      # optional
+related:                                 # optional (paths or other carnets)
+  - src/core/file/encoding.ts
+lifespan: 90d                            # optional (override default 30d)
+keep: true                               # optional (pin against auto-prune)
+meta:                                    # optional, free-form extension namespace
+  <extension>:
+    <key>: <value>
+---
+```
+
+Notes:
+- `created` is immutable after the first `save`. Every other CLI-managed date is recorded separately so you can tell "when was this note last edited" (`updated`) apart from "when was it last applied" (`last_used`) and "how often has it been applied" (`use_count`).
+- Expiry is driven by `last_used`, not `updated`. Editing the body is independent of using it. See [Lifespan](#lifespan) above.
+- `lifespan` accepts duration strings (`30d`, `90d`, `1y`) and the literal `never`.
+- `meta:` is a deliberate extension point for tools and conventions that need structured data beyond what `tags:` and `related:` express. The CLI does not interpret `meta:` itself — it preserves the full subtree on every read/write so downstream consumers (an Obsidian plugin, a sibling agent, your own script) can read and act on it. Namespace keys under the convention name (`meta.vocab.*`, `meta.hypothesis.*`) so different extensions don't collide.
+
+### Storage layout
+
+```
+<cwd>/.carnet/
+├── <category>/
+│   └── <slug>.md
+├── <category>/<sub>/
+│   └── <slug>.md
+└── .trash/                  # safety net for auto-pruned carnets
+    └── <category>/
+        └── <slug>.md
+```
+
+Phase 1 stores carnets only under the current working directory. A global `~/.carnet/` and `--scope` flag may come later.
+
+### Configuration
+
+Phase 1 has no config file. Behavior is controlled by environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AGENT_CARNET_AUTO_PRUNE` | `true` | Run lifespan/trash sweep on every CLI invocation. |
+| `AGENT_CARNET_DEFAULT_LIFESPAN` | `30d` | Default per-carnet expiry. |
+| `AGENT_CARNET_TRASH_TTL` | `7d` | How long `.trash/` keeps soft-deleted carnets before hard delete. |
 
 ## 🆚 How it differs from built-in agent memory
 
