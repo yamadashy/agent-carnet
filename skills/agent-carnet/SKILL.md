@@ -30,6 +30,8 @@ agent-carnet move <from> <to>
 agent-carnet rm <path> --yes
 ```
 
+`save` reads body content from **stdin** (pipe via `echo`, heredoc, or `<` redirection). The `--summary` flag is the standalone-readable headline; the piped stdin is the full body.
+
 When unsure of a subcommand's full flag set, run `agent-carnet <command> -h` (e.g.
 `agent-carnet save -h`, `agent-carnet used -h`). Each subcommand prints its own
 focused help — required arguments, options, and examples — without invoking
@@ -51,7 +53,7 @@ If grep / read / git log already gets a future reader to the same conclusion, sk
 Before starting related work or when context might exist:
 - `agent-carnet find <topic>` — quick scan of summaries
 - `agent-carnet list <category>` — browse a folder
-- `agent-carnet show <path>` — actually read (resets `last_used`; only use when the content matters)
+- `agent-carnet show <path>` — actually read (bumps `last_used`; only use when the content matters)
 
 ## When to call `used`
 
@@ -60,9 +62,9 @@ Call `agent-carnet used <path>` after a carnet **actually shaped your work**:
 - You consulted the carnet before retrying a hypothesis and skipped a dead-end.
 - You used the canonical name from a `vocab` carnet in new code instead of inventing your own.
 
-`used` increments `use_count` — a durable importance signal that survives across sessions and lets future readers (and `agent-carnet list --sort use_count`) surface load-bearing notes.
+Each `used` call bumps `last_used` AND increments `use_count` by one — a durable importance signal that survives across sessions and lets future readers (and `agent-carnet list --sort use_count`) surface load-bearing notes. Repeated calls each increment, so call once per real application event, not per session.
 
-Reading a carnet does NOT count. `show` already keeps it alive (weak signal); `used` records that the note was worth keeping for a real reason (strong signal).
+Reading a carnet does NOT count. `show` already keeps it alive (weak signal: bumps `last_used` only); `used` records that the note was worth keeping for a real reason (strong signal: bumps both).
 
 ## Hard rules
 
