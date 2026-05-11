@@ -37,12 +37,14 @@ filesystem operations.
 
 ## When to save
 
-Save proactively when you discover something worth preserving across sessions:
-- Research findings that took effort to derive
-- Non-obvious patterns / gotchas in the codebase
-- Solutions to tricky problems
-- Architectural decisions and the reasoning behind them
-- In-progress work that may be resumed later
+Save what would force a future reader (or another agent) to re-derive the same conclusion from scratch. The codebase already carries the *what*; the carnet carries the *why*.
+
+Concrete examples of save-worthy material:
+- "We tried X. It didn't work because Y. Don't waste time retrying without Z changing."
+- "The library does A, but only if you also call B beforehand. Not in their docs."
+- "Chose approach P over Q. Q would have been faster but breaks our R constraint."
+
+If grep / read / git log already gets a future reader to the same conclusion, skip it.
 
 ## When to recall
 
