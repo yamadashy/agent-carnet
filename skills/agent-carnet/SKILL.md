@@ -39,14 +39,14 @@ filesystem operations.
 
 ## When to save
 
-Save what would force a future reader (or another agent) to re-derive the same conclusion from scratch. The codebase already carries the *what*; the carnet carries the *why*.
+Treat carnet as an agent notebook, not a strict archive. If you think a note may help a future agent (or future-you) resume work, dodge a rethink, remember a temporary state, or preserve a useful hunch — save it. Provisional notes are welcome; the 30-day lifespan is the safety valve (notes that keep getting read or applied stay alive, the rest expire automatically).
 
-Concrete examples of save-worthy material:
+Examples worth keeping in mind (not an exhaustive list):
 - "We tried X. It didn't work because Y. Don't waste time retrying without Z changing."
 - "The library does A, but only if you also call B beforehand. Not in their docs."
 - "Chose approach P over Q. Q would have been faster but breaks our R constraint."
 
-If grep / read / git log already gets a future reader to the same conclusion, skip it.
+These are guidelines, not gates. If grep / read / git log already gets a future reader to the same conclusion, you can skip it — but when in doubt, prefer saving a small, well-summarized note over losing context.
 
 ## When to recall
 
