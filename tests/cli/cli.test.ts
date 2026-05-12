@@ -123,7 +123,7 @@ describe('cli', () => {
     expect(r.stdout.join('\n')).toMatch(/initialized/);
   });
 
-  it('save -> list -> find -> show round-trip', async () => {
+  it('save -> list -> find -> read round-trip', async () => {
     await captureRun(['init'], tmp.cwd);
     let r = await captureRun(
       ['save', 'deps/iconv', '--summary', 'iconv issue', '--agent', 'claude-code', '--body', 'hello body'],
@@ -138,7 +138,7 @@ describe('cli', () => {
     r = await captureRun(['find', 'iconv'], tmp.cwd);
     expect(r.stdout.join('\n')).toContain('deps/iconv.md');
 
-    r = await captureRun(['show', 'deps/iconv'], tmp.cwd);
+    r = await captureRun(['read', 'deps/iconv'], tmp.cwd);
     expect(r.stdout.join('\n')).toContain('hello body');
   });
 
@@ -158,9 +158,9 @@ describe('cli', () => {
     expect(r.stderr.join('\n')).toContain('conflict');
   });
 
-  it('show on missing carnet exits 3', async () => {
+  it('read on missing carnet exits 3', async () => {
     await captureRun(['init'], tmp.cwd);
-    const r = await captureRun(['show', 'deps/missing'], tmp.cwd);
+    const r = await captureRun(['read', 'deps/missing'], tmp.cwd);
     expect(r.exitCode).toBe(3);
     expect(r.stderr.join('\n')).toContain('not_found');
   });
@@ -176,7 +176,7 @@ describe('cli', () => {
 
   it('JSON error output for missing carnet is parseable', async () => {
     await captureRun(['init'], tmp.cwd);
-    const r = await captureRun(['--json', 'show', 'deps/missing'], tmp.cwd);
+    const r = await captureRun(['--json', 'read', 'deps/missing'], tmp.cwd);
     const obj = JSON.parse(r.stderr.join('\n'));
     expect(obj.ok).toBe(false);
     expect(obj.error.code).toBe('not_found');
@@ -200,10 +200,10 @@ describe('cli', () => {
     expect(obj.hits[0].path).toBe('deps/a.md');
   });
 
-  it('JSON output for show', async () => {
+  it('JSON output for read', async () => {
     await captureRun(['init'], tmp.cwd);
     await captureRun(['save', 'deps/a', '--summary', 's', '--agent', 'a', '--body', 'hi'], tmp.cwd);
-    const r = await captureRun(['--json', 'show', 'deps/a'], tmp.cwd);
+    const r = await captureRun(['--json', 'read', 'deps/a'], tmp.cwd);
     const obj = JSON.parse(r.stdout.join('\n'));
     expect(obj.ok).toBe(true);
     expect(obj.body).toContain('hi');

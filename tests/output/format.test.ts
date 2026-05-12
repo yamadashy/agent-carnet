@@ -4,10 +4,10 @@ import {
   formatFindJson,
   formatListHuman,
   formatListJson,
+  formatReadHuman,
+  formatReadJson,
   formatSaveHuman,
   formatSaveJson,
-  formatShowHuman,
-  formatShowJson,
 } from '../../src/output/format.js';
 import type { Carnet } from '../../src/types/index.js';
 
@@ -60,19 +60,19 @@ describe('format', () => {
     const obj = JSON.parse(formatFindJson([{ carnet: sample, matchedIn: ['summary'], snippet: 's' }]));
     expect(obj.hits[0].matched_in).toEqual(['summary']);
   });
-  it('show human with frontmatter', () => {
-    const out = formatShowHuman(sample, true);
+  it('read human with frontmatter', () => {
+    const out = formatReadHuman(sample, true);
     expect(out).toContain('summary: iconv');
     expect(out).toContain('tags: esm');
     expect(out).toContain('lifespan: 90d');
     expect(out).toContain('keep: true');
     expect(out).toContain('body content');
   });
-  it('show human body only', () => {
-    expect(formatShowHuman(sample, false)).toBe('body content');
+  it('read human body only', () => {
+    expect(formatReadHuman(sample, false)).toBe('body content');
   });
-  it('show json', () => {
-    const obj = JSON.parse(formatShowJson(sample));
+  it('read json', () => {
+    const obj = JSON.parse(formatReadJson(sample));
     expect(obj.body).toBe('body content');
   });
   it('save human', () => {

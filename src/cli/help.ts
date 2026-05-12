@@ -8,7 +8,7 @@ Commands:
   save <category>/<slug>     Create or update a carnet (--summary, --agent required)
   list [category]            List carnets (--recent, --tags, --expiring, --sort)
   find <keyword>             Search carnets (--in summary|tags|body|all, --category)
-  show <category>/<slug>     Print a carnet (bumps "last_used" unless --no-touch)
+  read <category>/<slug>     Print a carnet (bumps "last_used" unless --no-touch)
   used <category>/<slug>     Mark a carnet as applied: bump "last_used" + use_count
   move <from> <to>           Move a carnet to a new category (use trailing / to keep filename)
   rm <category>/<slug>       Delete a carnet (.trash/ by default; --hard to unlink, --yes to skip prompt)
@@ -38,7 +38,7 @@ Examples:
   echo "details..." | agent-carnet save deps/iconv-issue --summary "iconv-esm fix" --agent claude-code
   agent-carnet list --recent 10
   agent-carnet find iconv --in all
-  agent-carnet show deps/iconv-issue
+  agent-carnet read deps/iconv-issue
   agent-carnet used deps/iconv-issue
   agent-carnet move deps/iconv-issue archive/
   agent-carnet rm deps/iconv-issue --yes
@@ -117,7 +117,7 @@ Examples:
   agent-carnet list --sort use_count          # most-applied notes first
 `;
 
-const FIND_HELP = `agent-carnet find - Search carnets (does NOT bump "updated")
+const FIND_HELP = `agent-carnet find - Search carnets (does NOT bump lifespan)
 
 Usage:
   agent-carnet find <keyword> [options]
@@ -132,8 +132,8 @@ Options:
 
 Note:
   find is intentionally a peek — matching a keyword is not the same as reading
-  the carnet, so "updated" is not bumped. Use \`show\` when you actually need to
-  refresh the lifespan.
+  the carnet, so "last_used" is not bumped. Use \`read\` when you actually need
+  to refresh the lifespan.
 
 Examples:
   agent-carnet find iconv
@@ -141,10 +141,10 @@ Examples:
   agent-carnet find vocab --in tags
 `;
 
-const SHOW_HELP = `agent-carnet show - Print a carnet (bumps "last_used" to today by default)
+const READ_HELP = `agent-carnet read - Print a carnet (bumps "last_used" to today by default)
 
 Usage:
-  agent-carnet show <category>/<slug> [options]
+  agent-carnet read <category>/<slug> [options]
 
 Arguments:
   <category>/<slug>      Path of the carnet to print.
@@ -155,15 +155,15 @@ Options:
   --no-frontmatter       Suppress the YAML frontmatter from the output.
 
 Notes:
-  show is the *weak* use signal — pulling the body into context resets the
+  read is the *weak* use signal — pulling the body into context resets the
   lifespan but does NOT increment "use_count". When the carnet actually
   shapes your work, follow up with \`agent-carnet used <path>\` to record
   the strong signal.
 
 Examples:
-  agent-carnet show deps/iconv-issue
-  agent-carnet show deps/iconv-issue --no-touch
-  agent-carnet show vocab/staging-adapter --no-frontmatter
+  agent-carnet read deps/iconv-issue
+  agent-carnet read deps/iconv-issue --no-touch
+  agent-carnet read vocab/staging-adapter --no-frontmatter
 `;
 
 const USED_HELP = `agent-carnet used - Mark a carnet as applied (strong use signal)
@@ -182,7 +182,7 @@ What it does:
 When to call:
   After you actually applied a carnet's content to the work — solving a
   bug with the recorded fix, citing a debunked hypothesis, reusing a
-  vocabulary entry. \`show\` already keeps the carnet alive on read; \`used\`
+  vocabulary entry. \`read\` already keeps the carnet alive on read; \`used\`
   records the *importance* signal that survives across many sessions.
 
 Examples:
@@ -261,7 +261,7 @@ export const SUBCOMMAND_HELP: Record<string, string> = {
   save: SAVE_HELP,
   list: LIST_HELP,
   find: FIND_HELP,
-  show: SHOW_HELP,
+  read: READ_HELP,
   used: USED_HELP,
   move: MOVE_HELP,
   rm: RM_HELP,

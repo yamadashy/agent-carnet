@@ -7,8 +7,8 @@ import { init } from '../../src/core/init.js';
 import { list } from '../../src/core/list.js';
 import { storageRoot, trashRoot } from '../../src/core/paths.js';
 import { prune } from '../../src/core/prune.js';
+import { read } from '../../src/core/read.js';
 import { save } from '../../src/core/save.js';
-import { show } from '../../src/core/show.js';
 import { makeTmpCwd } from '../helpers/tmp.js';
 
 describe('round-trip', () => {
@@ -19,7 +19,7 @@ describe('round-trip', () => {
   });
   afterEach(() => tmp.cleanup());
 
-  it('init -> save -> list -> find -> show -> prune', async () => {
+  it('init -> save -> list -> find -> read -> prune', async () => {
     await init(tmp.cwd);
     await save(
       tmp.cwd,
@@ -31,10 +31,10 @@ describe('round-trip', () => {
     expect(entries.length).toBe(1);
     const hits = await find(tmp.cwd, 'iconv');
     expect(hits.length).toBe(1);
-    const c = await show(tmp.cwd, 'deps/iconv', {}, new Date(Date.UTC(2026, 4, 4)));
+    const c = await read(tmp.cwd, 'deps/iconv', {}, new Date(Date.UTC(2026, 4, 4)));
     expect(c.body).toContain('body text');
     expect(c.frontmatter.last_used).toBe('2026-05-04');
-    // After show bumps last_used to 2026-05-04, pruning at the same date should
+    // After read bumps last_used to 2026-05-04, pruning at the same date should
     // NOT expire it (lifespan default 30d, so safe until ~2026-06-03).
     let r = await prune(tmp.cwd, config, {}, new Date(Date.UTC(2026, 4, 4)));
     expect(r.movedToTrash).toEqual([]);

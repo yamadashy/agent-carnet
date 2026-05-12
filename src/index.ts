@@ -7,8 +7,8 @@ export { type InitOptions, type InitResult, init } from './core/init.js';
 export { type ListEntry, type ListOptions, list, type SortKey } from './core/list.js';
 export { categoryOf, normalizeCarnetPath, slugOf, storageRoot, trashRoot } from './core/paths.js';
 export { type PruneOptions, prune } from './core/prune.js';
+export { type ReadOptions, read } from './core/read.js';
 export { type SaveInput, type SaveResult, save } from './core/save.js';
-export { type ShowOptions, show } from './core/show.js';
 export { loadAllCarnets, readCarnet, writeCarnet } from './core/storage.js';
 export type {
   Carnet,

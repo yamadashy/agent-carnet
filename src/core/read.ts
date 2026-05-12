@@ -4,7 +4,7 @@ import { today } from './dates.js';
 import { normalizeCarnetPath, storageRoot } from './paths.js';
 import { readCarnet, writeCarnet } from './storage.js';
 
-export interface ShowOptions {
+export interface ReadOptions {
   noTouch?: boolean;
 }
 
@@ -18,10 +18,10 @@ export interface ShowOptions {
  * usage. `use_count` is also not incremented (only the explicit `used`
  * command does that).
  */
-export async function show(
+export async function read(
   cwd: string,
   path: string,
-  options: ShowOptions = {},
+  options: ReadOptions = {},
   now: Date = new Date(),
 ): Promise<Carnet> {
   const relPath = normalizeCarnetPath(path);

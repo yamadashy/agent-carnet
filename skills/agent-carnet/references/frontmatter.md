@@ -8,12 +8,12 @@ Read this file when you are about to write or read the `meta:` namespace, set a 
 
 ```yaml
 ---
-# CLI-managed (you provide these on save; usage fields update via show / used)
+# CLI-managed (you provide these on save; usage fields update via read / used)
 summary: "one-line decisive description"   # required
 agent: claude-code                         # required (e.g. claude-code, codex, cursor, human)
 created: 2026-05-10                        # set on first save, immutable thereafter
 updated: 2026-05-10                        # bumped on save / save --update (content modification)
-last_used: 2026-05-10                      # bumped on save / show / used (drives expiry)
+last_used: 2026-05-10                      # bumped on save / read / used (drives expiry)
 use_count: 7                               # incremented on `used` only (importance signal)
 
 # Optional, CLI-known
@@ -39,10 +39,10 @@ meta:                                      # free-form extension namespace; see 
 |---|---|---|
 | `created` | `save` (first time only) | Birth date. Never changes. |
 | `updated` | `save`, `save --update` | Last content modification. |
-| `last_used` | `save`, `show`, `used` | Last interaction. Drives expiry: `expiry = last_used + lifespan`. |
-| `use_count` | `used` (only) | How many times the carnet was explicitly applied. A reference signal of importance. |
+| `last_used` | `save`, `read`, `used` | Last interaction. Drives expiry: `expiry = last_used + lifespan`. |
+| `use_count` | `used` (only) | How many times the carnet was explicitly applied. A reference signal of importance. Surfaced as a `[N×]` badge in `list` / `find` output. |
 
-`show` is a *weak* use signal — pulling the body into context counts as use enough to keep the lifespan alive but not enough to bump `use_count`. `used` is the *strong* signal — call it after the carnet actually shaped your work.
+`read` is a *weak* use signal — pulling the body into context counts as use enough to keep the lifespan alive but not enough to bump `use_count`. `used` is the *strong* signal — call it after the carnet actually shaped your work.
 
 ## CLI-managed vs preserved fields
 
@@ -58,7 +58,7 @@ This is the foundation of the extension model: as long as you stay outside the C
 
 - **Namespace your keys under the convention name**: `meta.vocab.*`, `meta.hypothesis.*`, `meta.<your-tag>.*`. This avoids collisions between independent extensions.
 - Keep the values primitive when possible (strings, numbers, lists of strings). Anything more complex should probably live in the body where humans will actually read it.
-- The CLI has no `--meta` flag (yet). To set or change `meta:`, edit the carnet file directly after `save`, or have your tool write the file. The next CLI write (`save --update`, `touch`, `show`) preserves your edits.
+- The CLI has no `--meta` flag (yet). To set or change `meta:`, edit the carnet file directly after `save`, or have your tool write the file. The next CLI write (`save --update`, `read`, `used`) preserves your edits.
 
 **Reading `meta:` from another tool**: parse the file with any YAML frontmatter parser (`gray-matter`, `js-yaml` with manual frontmatter split, etc.). The CLI does not require any specific tooling on the read side.
 

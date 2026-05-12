@@ -6,9 +6,9 @@ import { init } from '../core/init.js';
 import { list } from '../core/list.js';
 import { move } from '../core/move.js';
 import { type PruneCandidate, type PruneDecision, prune } from '../core/prune.js';
+import { read } from '../core/read.js';
 import { remove } from '../core/rm.js';
 import { save } from '../core/save.js';
-import { show } from '../core/show.js';
 import { used } from '../core/used.js';
 import { parseCsv } from '../core/validate.js';
 import { exitCodeFor, formatErrorHuman, formatErrorJson, toErrorShape } from '../output/error.js';
@@ -17,10 +17,10 @@ import {
   formatFindJson,
   formatListHuman,
   formatListJson,
+  formatReadHuman,
+  formatReadJson,
   formatSaveHuman,
   formatSaveJson,
-  formatShowHuman,
-  formatShowJson,
 } from '../output/format.js';
 import { HELP_TEXT, SUBCOMMAND_HELP } from './help.js';
 import { confirm, confirm3, readStdin } from './io.js';
@@ -119,8 +119,8 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
       case 'find':
         await cmdFind(cwd, args, flags);
         return;
-      case 'show':
-        await cmdShow(cwd, args, flags);
+      case 'read':
+        await cmdRead(cwd, args, flags);
         return;
       case 'used':
         await cmdUsed(cwd, args, flags);
@@ -233,8 +233,9 @@ async function cmdList(cwd: string, args: string[], flags: RunFlags): Promise<vo
   });
   const v = parsed.values;
   const sort = v.sort as string | undefined;
-  if (sort && !['updated', 'created', 'name'].includes(sort)) {
-    throw new CarnetError('validation_error', `invalid --sort "${sort}"`, 'one of: updated, created, name');
+  const validSorts = ['last_used', 'use_count', 'updated', 'created', 'name'] as const;
+  if (sort && !(validSorts as readonly string[]).includes(sort)) {
+    throw new CarnetError('validation_error', `invalid --sort "${sort}"`, `one of: ${validSorts.join(', ')}`);
   }
   const recent = v.recent !== undefined ? Number(v.recent) : undefined;
   if (recent !== undefined && (!Number.isInteger(recent) || recent <= 0)) {
@@ -245,7 +246,7 @@ async function cmdList(cwd: string, args: string[], flags: RunFlags): Promise<vo
     recent,
     tags: parseCsv(v.tags as string | undefined),
     expiring: v.expiring as string | undefined,
-    sort: sort as 'updated' | 'created' | 'name' | undefined,
+    sort: sort as (typeof validSorts)[number] | undefined,
   });
   if (flags.json) console.log(formatListJson(entries));
   else console.log(formatListHuman(entries, !flags.noColor && process.stdout.isTTY));
@@ -281,7 +282,7 @@ async function cmdFind(cwd: string, args: string[], flags: RunFlags): Promise<vo
   else console.log(formatFindHuman(hits, !flags.noColor && process.stdout.isTTY));
 }
 
-async function cmdShow(cwd: string, args: string[], flags: RunFlags): Promise<void> {
+async function cmdRead(cwd: string, args: string[], flags: RunFlags): Promise<void> {
   const parsed = parseArgs({
     args,
     allowPositionals: true,
@@ -291,11 +292,11 @@ async function cmdShow(cwd: string, args: string[], flags: RunFlags): Promise<vo
     },
   });
   const path = parsed.positionals[0];
-  if (!path) throw new CarnetError('validation_error', 'show <path> is required');
+  if (!path) throw new CarnetError('validation_error', 'read <path> is required');
   const v = parsed.values;
-  const carnet = await show(cwd, path, { noTouch: v['no-touch'] as boolean | undefined });
-  if (flags.json) console.log(formatShowJson(carnet));
-  else console.log(formatShowHuman(carnet, !v['no-frontmatter']));
+  const carnet = await read(cwd, path, { noTouch: v['no-touch'] as boolean | undefined });
+  if (flags.json) console.log(formatReadJson(carnet));
+  else console.log(formatReadHuman(carnet, !v['no-frontmatter']));
 }
 
 async function cmdPrune(cwd: string, args: string[], flags: RunFlags): Promise<void> {

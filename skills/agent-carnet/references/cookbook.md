@@ -98,6 +98,6 @@ Wait for v0.8 before retrying.
 
 ## Adding new patterns
 
-The same shape applies to any new convention. Pick a tag name, optionally namespace structured data under `meta.<your-tag>.*`, and let the body do the rest. The CLI doesn't need to know about the pattern — `find` and `show` work the same way regardless of which tags a carnet carries.
+The same shape applies to any new convention. Pick a tag name, optionally namespace structured data under `meta.<your-tag>.*`, and let the body do the rest. The CLI doesn't need to know about the pattern — `find` and `read` work the same way regardless of which tags a carnet carries.
 
 When inventing a new pattern locally, keep it documented in the project's own carnet (e.g. a `vocab/` entry whose canonical name is the pattern itself) so future agents can discover it the same way they discover any other convention.

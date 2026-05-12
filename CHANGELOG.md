@@ -4,6 +4,38 @@ All notable changes to `agent-carnet` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-05-13
+
+### Changed (breaking)
+
+- `show` command renamed to `read`. The verb triplet `find / read /
+  used` reads cleaner than `find / show / used`: `read` makes the
+  "weak signal — pulling the body into context counts as use" semantics
+  obvious, where `show` was a generic CLI verb (`git show`, `kubectl
+  show`) that did not telegraph the lifespan side-effect. No alias —
+  the old name is removed (no external users yet).
+  - CLI: `agent-carnet show <path>` → `agent-carnet read <path>`. All
+    flags (`--no-touch`, `--no-frontmatter`) and JSON shape unchanged.
+  - Library: `show` / `ShowOptions` exports renamed to `read` /
+    `ReadOptions`. `formatShowHuman` / `formatShowJson` renamed to
+    `formatReadHuman` / `formatReadJson`.
+  - SUBCOMMAND_HELP key, README, SKILL.md, references/, and tests
+    updated accordingly.
+- `list` and `find` human output now show `use_count: N` (the actual
+  frontmatter field name) in the dim tail instead of the abbreviated
+  `used: N`. `find` gains the same `(use_count: N)` tail that `list`
+  already had — both commands now expose the importance signal so an
+  agent triaging matches can weigh it alongside the summary.
+
+### Fixed
+
+- `agent-carnet list --sort last_used` and `--sort use_count` no longer
+  fail validation as "invalid --sort". The CLI was rejecting every sort
+  field except `updated`, `created`, `name` even though `core/list.ts`
+  had supported `last_used` (the default) and `use_count` since 0.1.3.
+- `find -h` no longer claims `find` skips `"updated"` — `find` does not
+  bump `last_used` (the lifespan driver), which is what the help meant.
+
 ## [0.1.3] - 2026-05-10
 
 ### Changed (breaking)

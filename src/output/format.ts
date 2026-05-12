@@ -30,7 +30,7 @@ export function formatListHuman(entries: ListEntry[], useColor: boolean): string
       const summary = item.carnet.frontmatter.summary ?? '';
       const lastUsed = item.carnet.frontmatter.last_used ?? item.carnet.frontmatter.updated ?? '';
       const useCount = typeof item.carnet.frontmatter.use_count === 'number' ? item.carnet.frontmatter.use_count : 0;
-      const tailText = `(last_used: ${lastUsed}, used: ${useCount})`;
+      const tailText = `(last_used: ${lastUsed}, use_count: ${useCount})`;
       const tail = useColor ? pc.dim(tailText) : tailText;
       out.push(`  ${slug}  ${summary}  ${tail}`);
     }
@@ -61,7 +61,10 @@ export function formatFindHuman(hits: FindHit[], useColor: boolean): string {
   for (const h of hits) {
     const path = useColor ? pc.cyan(h.carnet.relPath) : h.carnet.relPath;
     const summary = h.carnet.frontmatter.summary ?? '';
-    out.push(`${path}  ${summary}  [${h.matchedIn.join(',')}]`);
+    const useCount = typeof h.carnet.frontmatter.use_count === 'number' ? h.carnet.frontmatter.use_count : 0;
+    const tailText = `(use_count: ${useCount})`;
+    const tail = useColor ? pc.dim(tailText) : tailText;
+    out.push(`${path}  ${summary}  ${tail}  [${h.matchedIn.join(',')}]`);
     if (h.snippet) out.push(`  ${h.snippet}`);
   }
   return out.join('\n');
@@ -83,7 +86,7 @@ export function formatFindJson(hits: FindHit[]): string {
   );
 }
 
-export function formatShowHuman(carnet: Carnet, withFrontmatter: boolean): string {
+export function formatReadHuman(carnet: Carnet, withFrontmatter: boolean): string {
   if (!withFrontmatter) return carnet.body;
   const fm = carnet.frontmatter;
   const lines: string[] = [
@@ -104,7 +107,7 @@ export function formatShowHuman(carnet: Carnet, withFrontmatter: boolean): strin
   return lines.join('\n');
 }
 
-export function formatShowJson(carnet: Carnet): string {
+export function formatReadJson(carnet: Carnet): string {
   return JSON.stringify(
     {
       ok: true,

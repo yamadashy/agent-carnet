@@ -17,9 +17,9 @@
 
 **Agent Carnet** (pronounced `/ˌeɪdʒənt kɑːrˈneɪ/`, like "agent kar-NAY") is a tiny CLI — `agent-carnet` — that gives AI coding agents (Claude Code, Codex, Cursor) a shared notebook on disk. Each note is a markdown file under `.carnet/<category>/<slug>.md`.
 
-<!-- TODO: capture ./docs/screenshots/terminal.png (a side-by-side of `agent-carnet list` and `agent-carnet show`) and uncomment.
+<!-- TODO: capture ./docs/screenshots/terminal.png (a side-by-side of `agent-carnet list` and `agent-carnet read`) and uncomment.
 <p align="center">
-  <img src="./docs/screenshots/terminal.png" alt="agent-carnet list and show output, with category-grouped carnets and a styled markdown view" />
+  <img src="./docs/screenshots/terminal.png" alt="agent-carnet list and read output, with category-grouped carnets and a styled markdown view" />
 </p>
 -->
 
@@ -44,7 +44,7 @@ echo "Notes about iconv-esm interop." | npx agent-carnet save deps/iconv-issue \
 # Look around
 npx agent-carnet list
 npx agent-carnet find iconv
-npx agent-carnet show deps/iconv-issue
+npx agent-carnet read deps/iconv-issue
 ```
 
 Or install once:
@@ -76,13 +76,13 @@ stateDiagram-v2
     direction LR
 
     [*] --> Live: save
-    Live --> Live: show / used / save --update<br/>(resets lifespan)
+    Live --> Live: read / used / save --update<br/>(resets lifespan)
     Live --> Trash: expired (30d idle)
     Trash --> Live: restore
     Trash --> [*]: delete (7d)
 ```
 
-**expired (30d idle)** means `last_used + lifespan < today` — auto-prune sweeps the carnet to `.trash/` once nothing has touched it for the lifespan window (default 30 days). **delete (7d)** is the hard delete that runs after the trash TTL. The table further down spells out which fields each command on the self-loop actually bumps (`show` / `used` / `save --update` differ on which of `updated`, `last_used`, `use_count` they touch).
+**expired (30d idle)** means `last_used + lifespan < today` — auto-prune sweeps the carnet to `.trash/` once nothing has touched it for the lifespan window (default 30 days). **delete (7d)** is the hard delete that runs after the trash TTL. The table further down spells out which fields each command on the self-loop actually bumps (`read` / `used` / `save --update` differ on which of `updated`, `last_used`, `use_count` they touch).
 
 The expiry date is computed from two frontmatter fields:
 
@@ -101,7 +101,7 @@ When `expiry <= today`, the carnet is considered stale and auto-prune moves it t
 |---|---|---|
 | `created` | `save` (first time only) | Birth date. Immutable. |
 | `updated` | `save`, `save --update` | Last content modification. Independent of usage. |
-| `last_used` | `save`, `show`, `used` | Last interaction. **Drives expiry.** |
+| `last_used` | `save`, `read`, `used` | Last interaction. **Drives expiry.** |
 | `use_count` | `used` (only) | Explicit-use counter. A reference signal of importance. |
 
 ### Refresh-on-use: two strengths of "use"
@@ -110,8 +110,8 @@ A carnet's life is extended whenever it is **used**. The CLI distinguishes two s
 
 ```mermaid
 flowchart TB
-    A[carnet read?] -->|find / list| B[no signal<br/>lifespan unchanged]
-    A -->|show| C[weak signal<br/>last_used = today]
+    A[carnet accessed?] -->|find / list| B[no signal<br/>lifespan unchanged]
+    A -->|read| C[weak signal<br/>last_used = today]
     A -->|used| D[strong signal<br/>last_used = today<br/>use_count + 1]
 
     style B stroke-dasharray: 4 2
@@ -119,15 +119,15 @@ flowchart TB
     style D stroke-width:3px
 ```
 
-- **Weak signal — `show`.** Reading the body resets the lifespan. The agent bothered to pull the carnet into context, which is enough to keep it alive.
+- **Weak signal — `read`.** Reading the body resets the lifespan. The agent bothered to pull the carnet into context, which is enough to keep it alive.
 - **Strong signal — `used`.** After applying a carnet's content (fixing a bug with the recorded fix, citing a debunked hypothesis, reusing a vocabulary entry), call `agent-carnet used <path>`. This bumps `last_used` *and* increments `use_count` — a durable importance metric you can sort by (`agent-carnet list --sort use_count`) or that downstream tooling can read.
 
 | Action | `updated` | `last_used` | `use_count` |
 |---|---|---|---|
 | `save <path>` (create) | today | today | 0 |
 | `save <path> --update` | today | today | unchanged |
-| `show <path>` | — | today | — |
-| `show <path> --no-touch` | — | — | — |
+| `read <path>` | — | today | — |
+| `read <path> --no-touch` | — | — | — |
 | `used <path>` | — | today | **+1** |
 | `find <keyword>` | — | — | — |
 | `list`, `move`, `rm` | — | — | — |
@@ -266,7 +266,7 @@ Lookup material — every command and flag, the on-disk file format, the directo
 | `save <category>/<slug> --summary <s> --agent <a> [--tags] [--related] [--body or stdin] [--lifespan] [--keep] [--update]` | Create or update a carnet. |
 | `list [category] [--recent N] [--tags a,b] [--expiring 7d] [--sort last_used\|updated\|created\|name\|use_count]` | List carnets, grouped by category. |
 | `find <keyword> [--in summary\|tags\|body\|all] [--category] [--limit N]` | Pure-JS search. Default scope is `summary`. Does **not** refresh `last_used`. |
-| `show <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. Bumps `last_used` to today (weak use signal); pass `--no-touch` to peek without leaving fingerprints. |
+| `read <category>/<slug> [--no-touch] [--no-frontmatter]` | Print a carnet. Bumps `last_used` to today (weak use signal); pass `--no-touch` to peek without leaving fingerprints. |
 | `used <category>/<slug>` | Mark a carnet as **applied** — bumps `last_used` and increments `use_count`. The strong use signal; call after the note actually shaped your work. |
 | `move <from> <to> [--update]` | Move a carnet between categories. Trailing `/` on `<to>` keeps the source filename. |
 | `rm <category>/<slug> [--yes] [--hard]` | Delete one carnet. Soft-delete to `.trash/` by default; `--hard` unlinks immediately. |
@@ -286,7 +286,7 @@ summary: "iconv-esm compatibility fix"   # required (one line)
 agent: claude-code                       # required (claude-code, codex, cursor, human, ...)
 created: 2026-05-04                      # CLI-managed, immutable after first save
 updated: 2026-05-04                      # CLI-managed, last content modification (save / save --update)
-last_used: 2026-05-04                    # CLI-managed, last read/applied (save / show / used) — drives expiry
+last_used: 2026-05-04                    # CLI-managed, last read/applied (save / read / used) — drives expiry
 use_count: 7                             # CLI-managed, count of explicit `used` calls (importance signal)
 tags: [compat, esm]                      # optional
 related:                                 # optional (paths or other carnets)
