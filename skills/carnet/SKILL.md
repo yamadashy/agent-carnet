@@ -1,6 +1,6 @@
 ---
 name: carnet
-description: "Use this skill when the user asks to save, recall, find, or organize notes. Triggers on English phrases like 'remember this', 'save this', 'note this', 'what did we discuss about...', 'check the notebook', 'find in carnet', AND on Japanese equivalents like 'メモして', 'メモっといて', 'メモって', '覚えて', '覚えといて', '残しておいて', '記録して', '思い出して', 'なんだっけ', 'あれってなんだっけ', 'カーネに'. Also use proactively when discovering findings worth preserving across sessions."
+description: "Persistent file-based notebook (.carnet/<category>/<slug>.md, markdown + YAML frontmatter, auto-expiring after 30 days of disuse) shared by AI agents and humans. Use whenever the conversation involves saving, recalling, or organizing notes across sessions — including IMPLICIT cues like the user describing a tricky fix worth not redoing, asking 'what did we decide about X', handing off a mid-task state to be picked up later, or wanting to set something aside and forget it for now. Use PROACTIVELY (without being asked) whenever you discover something a future agent (or future-you) would otherwise have to re-derive from scratch — a non-obvious library gotcha, a fix that took real effort to find, a rejected design alternative that would otherwise be re-proposed, an in-progress state worth resuming. When in doubt, save: unused notes drift to .trash/ automatically, so the cost of an unneeded save is essentially zero."
 ---
 
 # Agent Carnet
