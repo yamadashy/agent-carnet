@@ -1,6 +1,6 @@
 ---
 name: carnet
-description: "Use this skill when the user asks to save, recall, find, or organize notes. Triggers on: 'remember this', 'save this', 'note this', 'what did we discuss about...', 'check the notebook', 'find in carnet'. Also use proactively when discovering findings worth preserving across sessions."
+description: "Use this skill when the user asks to save, recall, find, or organize notes. Triggers on English phrases like 'remember this', 'save this', 'note this', 'what did we discuss about...', 'check the notebook', 'find in carnet', AND on Japanese equivalents like 'メモして', 'メモっといて', 'メモって', '覚えて', '覚えといて', '残しておいて', '記録して', '思い出して', 'なんだっけ', 'あれってなんだっけ', 'カーネに'. Also use proactively when discovering findings worth preserving across sessions."
 ---
 
 # Agent Carnet
