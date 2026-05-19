@@ -12,6 +12,7 @@
   <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/v/agent-carnet.svg?maxAge=1000" alt="npm"></a>
   <a href="https://www.npmjs.com/package/agent-carnet"><img src="https://img.shields.io/npm/dt/agent-carnet.svg" alt="downloads"></a>
   <a href="https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml"><img src="https://github.com/yamadashy/agent-carnet/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://coderabbit.ai"><img src="https://img.shields.io/coderabbit/prs/github/yamadashy/agent-carnet?utm_source=oss&utm_medium=github&utm_campaign=yamadashy%2Fagent-carnet&labelColor=171717&color=FF570A&label=CodeRabbit+Reviews" alt="CodeRabbit Pull Request Reviews"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
