@@ -1,6 +1,15 @@
 ---
 name: carnet
-description: "Persistent file-based notebook (.carnet/<category>/<slug>.md, auto-expiring after 30 days of disuse) shared by AI agents and humans. Use whenever the conversation involves saving, recalling, or organizing notes across sessions — including IMPLICIT cues like the user describing a tricky fix worth not redoing, asking 'what did we decide about X', handing off a mid-task state to be picked up later, or wanting to set something aside and forget it for now. Use PROACTIVELY (without being asked) whenever you discover something a future agent (or future-you) would otherwise have to re-derive from scratch — a non-obvious library gotcha, a fix that took real effort to find, a rejected design alternative that would otherwise be re-proposed, an in-progress state worth resuming. SKIP for: time-bound TODOs that need to nag (TodoWrite or GitHub Issues surface back, carnet does not), credentials or secrets (never write to disk), and context already captured in a commit message, PR description, or ADR (no double-bookkeeping). When in doubt, prefer a brief note over losing context: unused notes expire automatically."
+description: |
+  Persistent file-based notebook (.carnet/<category>/<slug>.md, auto-expiring after 30 days of disuse) shared by AI agents and humans.
+
+  Use whenever the conversation involves saving, recalling, or organizing notes across sessions — including IMPLICIT cues like the user describing a tricky fix worth not redoing, asking 'what did we decide about X', handing off a mid-task state to be picked up later, or wanting to set something aside and forget it for now.
+
+  Use PROACTIVELY (without being asked) whenever you discover something a future agent (or future-you) would otherwise have to re-derive from scratch — a non-obvious library gotcha, a fix that took real effort to find, a rejected design alternative that would otherwise be re-proposed, an in-progress state worth resuming.
+
+  SKIP for: time-bound TODOs that need to nag (TodoWrite or GitHub Issues surface back, carnet does not), credentials or secrets (never write to disk), and context already captured in a commit message, PR description, or ADR (no double-bookkeeping).
+
+  When in doubt, prefer a brief note over losing context: unused notes expire automatically.
 ---
 
 # Agent Carnet
