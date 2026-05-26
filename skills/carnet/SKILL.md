@@ -1,13 +1,13 @@
 ---
 name: carnet
 description: |
-  Persistent file-based notebook (.carnet/<category>/<slug>.md, auto-expiring after 30 days of disuse) shared by AI agents and humans.
+  Persistent file-based notebook (.carnet/<category>/<slug>.md, auto-expiring after 30 days of disuse) for AI agents and humans.
 
-  Use whenever the conversation involves saving, recalling, or organizing notes across sessions — including IMPLICIT cues like the user describing a tricky fix worth not redoing, asking 'what did we decide about X', handing off a mid-task state to be picked up later, or wanting to set something aside and forget it for now.
+  Use whenever saving, recalling, or organizing notes across sessions — IMPLICIT cues include the user recapping a tricky fix worth not redoing, asking 'what did we decide about X', handing off mid-task state, or setting something aside for now.
 
-  Use PROACTIVELY (without being asked) whenever you discover something a future agent (or future-you) would otherwise have to re-derive from scratch — a non-obvious library gotcha, a fix that took real effort to find, a rejected design alternative that would otherwise be re-proposed, an in-progress state worth resuming.
+  Use PROACTIVELY when you discover something a future agent would otherwise re-derive from scratch — a non-obvious library gotcha, a hard-won fix, a rejected design alternative likely to be re-proposed, an in-progress state worth resuming.
 
-  SKIP for: time-bound TODOs that need to nag (TodoWrite or GitHub Issues surface back, carnet does not), credentials or secrets (never write to disk), and context already captured in a commit message, PR description, or ADR (no double-bookkeeping).
+  SKIP for: time-bound TODOs that need to nag (TodoWrite/Issues surface back, carnet does not), credentials/secrets (don't put them on disk), context already in a commit/PR/ADR (no double-bookkeeping).
 
   When in doubt, prefer a brief note over losing context: unused notes expire automatically.
 ---
