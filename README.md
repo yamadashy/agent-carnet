@@ -56,17 +56,17 @@ npm install -g agent-carnet
 
 ### Install the Claude Code skill
 
-Agent Carnet ships a bundled skill named `carnet` at `skills/carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
+Agent Carnet ships a bundled skill named `agent-carnet` at `skills/agent-carnet/` (`SKILL.md` plus a small `references/` set) so any Claude Code, Codex, or Cursor session knows when to reach for the CLI. Install it with [`npx skills`](https://github.com/vercel-labs/skills), the open agent-skills installer:
 
 ```bash
-# Project install (default) — drops the skill into <cwd>/.claude/skills/carnet/
+# Project install (default) — drops the skill into <cwd>/.claude/skills/agent-carnet/
 npx skills add yamadashy/agent-carnet
 
-# Global install — drops it into ~/.claude/skills/carnet/ instead
+# Global install — drops it into ~/.claude/skills/agent-carnet/ instead
 npx skills add yamadashy/agent-carnet -g
 ```
 
-The package URL stays `yamadashy/agent-carnet` (the GitHub repo and npm package are still `agent-carnet`); only the bundled skill carries the shorter `carnet` name so that agents and humans don't have to type the redundant `agent-` prefix on every `/carnet` invocation.
+The skill, GitHub repo, npm package, and CLI command all share the one `agent-carnet` name; the on-disk note folder is `.carnet/`.
 
 `npx skills` handles the install / uninstall / list lifecycle uniformly across agents, so Agent Carnet itself doesn't need to know about Claude Code's filesystem layout.
 
