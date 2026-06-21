@@ -50,6 +50,8 @@ The CLI rewrites only the fields it knows about: `summary`, `agent`, `created`, 
 
 This is the foundation of the extension model: as long as you stay outside the CLI-managed names, your fields survive every CLI write.
 
+One more reserved name: the CLI stamps `trashed_at: YYYY-MM-DD` when it moves a carnet into `.carnet/.trash/` (via auto-prune or `rm`). It anchors the trash TTL — a trashed carnet is hard-deleted once it has sat in `.trash/` longer than `AGENT_CARNET_TRASH_TTL` (default 7d), counted from `trashed_at`, not the file's last edit. It only ever appears on trashed files; you never set it on a live carnet.
+
 ## `meta:` extension namespace
 
 `meta:` is a deliberate place for structured data the CLI itself does not interpret but downstream consumers can act on (an Obsidian plugin, a sibling agent, your own script, the cookbook patterns).
