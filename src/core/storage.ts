@@ -57,7 +57,7 @@ export async function readCarnet(absPath: string, relPath: string): Promise<Carn
   // objects. Carnets store dates as plain ISO strings everywhere else, so
   // normalize back to YYYY-MM-DD here. Otherwise downstream comparisons
   // (`fm.updated !== today()`) and JSON serialization both surprise the user.
-  for (const key of ['created', 'updated', 'last_used'] as const) {
+  for (const key of ['created', 'updated', 'last_used', 'trashed_at'] as const) {
     const v = fm[key];
     if (v instanceof Date) {
       fm[key] =
