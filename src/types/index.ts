@@ -32,6 +32,11 @@ export interface CarnetFrontmatter {
   lifespan?: string;
   /** Pin against auto-prune. */
   keep?: boolean;
+  /** ISO date (YYYY-MM-DD). Stamped when the carnet is moved into `.trash/`.
+   *  Drives the trash TTL (`hard-delete = trashed_at + trashTtl`) so the
+   *  recovery window counts from arrival, not from the carnet's last edit.
+   *  Normally only present on files under `.trash/`. */
+  trashed_at?: string;
   /** Allow extra user-supplied keys. */
   [key: string]: unknown;
 }

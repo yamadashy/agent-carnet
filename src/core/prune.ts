@@ -3,7 +3,7 @@ import type { Carnet, PruneReport } from '../types/index.js';
 import type { RuntimeConfig } from './config.js';
 import { daysUntil, expiryDate, lifespanAnchor, parseLifespan } from './dates.js';
 import { trashRoot } from './paths.js';
-import { fileMtime, hardDelete, loadAllCarnets, moveToTrash, walkMarkdown } from './storage.js';
+import { hardDelete, loadAllCarnets, moveToTrash, trashEntryTime, walkMarkdown } from './storage.js';
 
 /** What an interactive prompter is told about each expired carnet. */
 export interface PruneCandidate {
@@ -59,7 +59,7 @@ export async function prune(
         if (decision === 'no') continue;
       }
       if (!options.dryRun) {
-        await moveToTrash(cwd, c.relPath);
+        await moveToTrash(cwd, c.relPath, now);
       }
       report.movedToTrash.push(c.relPath);
     }
@@ -72,8 +72,8 @@ export async function prune(
       const trashRels = await walkMarkdown(trashDir);
       for (const rel of trashRels) {
         const abs = join(trashDir, rel);
-        const mtime = await fileMtime(abs);
-        if (now.getTime() - mtime.getTime() >= ttlMs) {
+        const entryTime = await trashEntryTime(abs, rel);
+        if (now.getTime() - entryTime.getTime() >= ttlMs) {
           if (!options.dryRun) {
             await hardDelete(abs);
           }

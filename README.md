@@ -143,14 +143,14 @@ The lifecycle diagram above has three states on disk:
 
 1. **live** (`.carnet/<category>/<slug>.md`) — the working notebook.
 2. **trash** (`.carnet/.trash/<category>/<slug>.md`) — soft-deleted carnets, kept for `AGENT_CARNET_TRASH_TTL` (default `7d`). Original sub-path is preserved, so restoring is `mv .carnet/.trash/foo/bar.md .carnet/foo/bar.md`.
-3. **hard delete** — anything in `.trash/` whose mtime is older than the trash TTL is unlinked permanently. This is the only step that loses data.
+3. **hard delete** — a carnet is unlinked permanently once it has sat in `.trash/` longer than the trash TTL, measured from the `trashed_at` stamp written on arrival (not the carnet's last-edit time). This is the only step that loses data.
 
 ### Auto-prune
 
 Every CLI invocation (except `--help` / `--version`) sweeps the notebook:
 
 1. Walks `.carnet/` and moves carnets where `expiry <= today` to `.trash/`.
-2. Hard-deletes anything in `.trash/` whose mtime is older than the trash TTL.
+2. Hard-deletes anything in `.trash/` whose `trashed_at` stamp is older than the trash TTL.
 
 Opt out per call with `--no-auto-prune`, or globally with `AGENT_CARNET_AUTO_PRUNE=false` and run `agent-carnet prune --auto` from CI instead. The latter is the recommended pattern for shared, git-tracked notebooks: each developer's local CLI should not silently delete other people's carnets.
 
