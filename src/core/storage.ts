@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import matter from 'gray-matter';
 import type { Carnet, CarnetFrontmatter } from '../types/index.js';
+import { parseDate, today } from './dates.js';
 import { CarnetError } from './errors.js';
 import { storageRoot, TRASH_DIR_NAME, trashRoot } from './paths.js';
 
@@ -56,7 +57,7 @@ export async function readCarnet(absPath: string, relPath: string): Promise<Carn
   // objects. Carnets store dates as plain ISO strings everywhere else, so
   // normalize back to YYYY-MM-DD here. Otherwise downstream comparisons
   // (`fm.updated !== today()`) and JSON serialization both surprise the user.
-  for (const key of ['created', 'updated', 'last_used'] as const) {
+  for (const key of ['created', 'updated', 'last_used', 'trashed_at'] as const) {
     const v = fm[key];
     if (v instanceof Date) {
       fm[key] =
@@ -101,17 +102,46 @@ export async function loadAllCarnets(cwd: string = process.cwd()): Promise<Carne
 }
 
 /** Move a carnet from the live tree into `.trash/`, preserving its sub-path. */
-export async function moveToTrash(cwd: string, relPath: string): Promise<string> {
+export async function moveToTrash(cwd: string, relPath: string, now: Date = new Date()): Promise<string> {
   const src = resolve(storageRoot(cwd), relPath);
   const dest = resolve(trashRoot(cwd), relPath);
   await ensureDir(dirname(dest));
   await rename(src, dest);
+  // Stamp the arrival time so the trash TTL counts from when the carnet landed
+  // here, not from its last edit. An expired carnet is already >= lifespan
+  // stale, so an mtime-based TTL would hard-delete it the instant it arrives,
+  // skipping the recovery window entirely.
+  try {
+    const c = await readCarnet(dest, relPath);
+    c.frontmatter.trashed_at = today(now);
+    await writeCarnet(dest, c.frontmatter, c.body);
+  } catch {
+    // Corrupt frontmatter can't be stamped; touch the mtime instead so the
+    // sweep still measures the TTL from arrival rather than the old edit time.
+    await utimes(dest, now, now);
+  }
   return dest;
 }
 
 export async function fileMtime(absPath: string): Promise<Date> {
   const s = await stat(absPath);
   return s.mtime;
+}
+
+/**
+ * When a trashed carnet entered `.trash/`. Prefers the `trashed_at` stamp;
+ * falls back to the file mtime for carnets trashed before stamping existed (or
+ * whose frontmatter can't be parsed).
+ */
+export async function trashEntryTime(absPath: string, relPath: string): Promise<Date> {
+  try {
+    const c = await readCarnet(absPath, relPath);
+    const t = c.frontmatter.trashed_at;
+    if (typeof t === 'string') return parseDate(t);
+  } catch {
+    // Unparseable frontmatter or a malformed trashed_at: fall back to mtime.
+  }
+  return fileMtime(absPath);
 }
 
 export async function hardDelete(absPath: string): Promise<void> {

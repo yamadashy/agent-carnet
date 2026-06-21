@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { utimes } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readConfig } from '../../src/core/config.js';
@@ -92,7 +92,7 @@ describe('prune', () => {
     expect(report.movedToTrash).toEqual([]);
   });
 
-  it('hard-deletes from .trash/ after TTL when --include-trash', async () => {
+  it('stamps trashed_at when moving to .trash/', async () => {
     await save(
       tmp.cwd,
       config,
@@ -100,11 +100,38 @@ describe('prune', () => {
       new Date(Date.UTC(2026, 0, 1)),
     );
     await prune(tmp.cwd, config, {}, new Date(Date.UTC(2026, 4, 4)));
-    const trashFile = join(trashRoot(tmp.cwd), 'deps/old.md');
-    // Backdate the trash file's mtime so it looks ancient.
-    const old = new Date(Date.UTC(2026, 0, 1));
-    await utimes(trashFile, old, old);
+    const raw = await readFile(join(trashRoot(tmp.cwd), 'deps/old.md'), 'utf-8');
+    expect(raw).toContain("trashed_at: '2026-05-04'");
+  });
+
+  it('keeps a freshly-trashed carnet through the same prune run', async () => {
+    // The carnet was last written months ago, so its mtime is ancient — but the
+    // trash TTL must count from arrival, not from that edit, or the recovery
+    // window is skipped entirely.
+    await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/old', summary: 's', agent: 'a', body: '' },
+      new Date(Date.UTC(2026, 0, 1)),
+    );
     const report = await prune(tmp.cwd, config, { includeTrash: true }, new Date(Date.UTC(2026, 4, 4)));
+    expect(report.movedToTrash).toEqual(['deps/old.md']);
+    expect(report.hardDeleted).toEqual([]);
+    expect(existsSync(join(trashRoot(tmp.cwd), 'deps/old.md'))).toBe(true);
+  });
+
+  it('hard-deletes from .trash/ once trashed_at is older than the TTL', async () => {
+    await save(
+      tmp.cwd,
+      config,
+      { path: 'deps/old', summary: 's', agent: 'a', body: '' },
+      new Date(Date.UTC(2026, 0, 1)),
+    );
+    // Trashed on 2026-05-04 (trashed_at stamped to that date).
+    await prune(tmp.cwd, config, {}, new Date(Date.UTC(2026, 4, 4)));
+    const trashFile = join(trashRoot(tmp.cwd), 'deps/old.md');
+    // 8 days later (> 7d default TTL): the recovery window has elapsed.
+    const report = await prune(tmp.cwd, config, { includeTrash: true }, new Date(Date.UTC(2026, 4, 12)));
     expect(report.hardDeleted).toEqual(['deps/old.md']);
     expect(existsSync(trashFile)).toBe(false);
   });
