@@ -349,7 +349,7 @@ Agent Carnet is intentionally less ambitious than vendor memories: it does not t
 
 ```bash
 npm install
-npm run lint     # biome + oxlint + tsgo + secretlint
+npm run lint     # biome + oxlint + tsc + secretlint
 npm run test     # vitest
 npm run build    # tsdown bundle
 ```

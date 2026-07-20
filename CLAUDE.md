@@ -79,7 +79,7 @@ Every CLI invocation (except `--help` / `--version`) runs `prune` lazily:
 ## Build and Tooling
 
 - **Build**: `npm run build` (tsdown / rolldown). Outputs `dist/bin/agent-carnet.mjs` (CLI) and `dist/index.mjs` (library).
-- **Lint pipeline**: `npm run lint` runs Biome + oxlint + tsgo + secretlint. Each is also exposed individually as `lint-biome`, `lint-oxlint`, `lint-ts`, `lint-secretlint`.
+- **Lint pipeline**: `npm run lint` runs Biome + oxlint + tsc + secretlint. Each is also exposed individually as `lint-biome`, `lint-oxlint`, `lint-ts`, `lint-secretlint`.
 - **Test**: Vitest. `npm run test` (and `test-coverage` for thresholds).
 - Coverage thresholds: lines/statements/functions ≥ 85, branches ≥ 80.
 

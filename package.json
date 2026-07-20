@@ -32,7 +32,7 @@
     "lint": "node --run lint-biome && node --run lint-oxlint && node --run lint-ts && node --run lint-secretlint",
     "lint-biome": "biome check --write",
     "lint-oxlint": "oxlint --fix",
-    "lint-ts": "tsgo --noEmit",
+    "lint-ts": "tsc --noEmit",
     "lint-secretlint": "secretlint \"**/*\" --secretlintignore .gitignore",
     "test": "vitest run",
     "test-coverage": "vitest run --coverage"
@@ -73,12 +73,11 @@
     "@biomejs/biome": "^2.5.0",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
     "@types/node": "^25.9.3",
-    "@typescript/native-preview": "^7.0.0-dev.20260613.1",
     "@vitest/coverage-v8": "^4.1.8",
     "oxlint": "^1.69.0",
     "secretlint": "^13.0.2",
-    "tsdown": "^0.22.2",
-    "typescript": "^6.0.3",
+    "tsdown": "^0.22.12",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.8"
   }
 }
