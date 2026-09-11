@@ -66,17 +66,17 @@
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
-    "parse-duration": "^2.1.6",
+    "parse-duration": "^2.1.8",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.0",
-    "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
-    "@types/node": "^25.9.3",
-    "@vitest/coverage-v8": "^4.1.8",
-    "oxlint": "^1.69.0",
-    "secretlint": "^13.0.2",
-    "tsdown": "^0.22.12",
+    "@biomejs/biome": "^2.5.12",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.5",
+    "@types/node": "^25.9.5",
+    "@vitest/coverage-v8": "^4.1.11",
+    "oxlint": "^1.81.0",
+    "secretlint": "^13.0.5",
+    "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.8"
   }
