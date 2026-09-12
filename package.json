@@ -73,7 +73,7 @@
     "@biomejs/biome": "^2.5.0",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
     "@types/node": "^25.9.3",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^5.0.0",
     "oxlint": "^1.69.0",
     "secretlint": "^13.0.2",
     "tsdown": "^0.22.12",
