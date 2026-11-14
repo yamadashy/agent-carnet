@@ -18,6 +18,10 @@ jobs:
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
+    # claude-code-action rejects runs initiated by bots (Renovate, Dependabot),
+    # which would leave a failing check on every dependency PR. Skip instead.
+    if: github.event.sender.type != 'Bot'
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
